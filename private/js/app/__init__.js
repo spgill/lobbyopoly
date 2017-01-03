@@ -4,5 +4,6 @@ app = angular.module('spgill.MonopolyManager', [
 
     'spgill.MonopolyManager.config',
     'spgill.MonopolyManager.controllers',
+    'spgill.MonopolyManager.directives',
     'spgill.MonopolyManager.states'
 ])
