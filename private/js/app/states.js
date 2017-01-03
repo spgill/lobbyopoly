@@ -14,6 +14,7 @@ app.config(function($stateProvider, $urlRouterProvider) {
     // Lobby state
     $stateProvider.state('lobby', {
         url: '/lobby/:code/:name',
-        templateUrl: '/html/state/lobby.html'
+        templateUrl: '/html/state/lobby.html',
+        controller: 'LobbyController as main'
     })
 })

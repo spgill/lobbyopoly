@@ -14,7 +14,13 @@ app.controller('SplashController', function($state) {
 
     this.create = () => {
         if (this.name) {
-            
+
         }
     }
+})
+
+
+// Controller for lobby state
+app.controller('LobbyController', function($state) {
+    
 })
