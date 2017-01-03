@@ -22,5 +22,11 @@ app.controller('SplashController', function($state) {
 
 // Controller for lobby state
 app.controller('LobbyController', function($state) {
-    
+
+})
+
+
+// Controller for player controls (lol)
+app.controller('PlayerControlsController', function() {
+    this.what = 'is up, my dudes'
 })
