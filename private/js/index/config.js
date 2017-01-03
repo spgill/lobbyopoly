@@ -4,7 +4,7 @@ app = angular.module('spgill.MonopolyManager.config', ['spgill.MonopolyManager']
 app.config(function ($mdThemingProvider) {
     $mdThemingProvider.theme('default')
         .primaryPalette('red', {
-            'default': '700'
+            'default': '600'
         })
         .accentPalette('blue', {
             'default': '900'
