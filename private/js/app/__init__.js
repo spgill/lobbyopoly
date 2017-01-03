@@ -3,7 +3,6 @@ app = angular.module('spgill.MonopolyManager', [
     'ui.router',
 
     'spgill.MonopolyManager.config',
+    'spgill.MonopolyManager.controllers',
     'spgill.MonopolyManager.states'
 ])
-
-app.lol = 'lol'

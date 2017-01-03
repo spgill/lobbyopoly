@@ -1,23 +1,32 @@
 div(layout-fill layout="column" layout-align="center center")
 
-    div.inner(layout="column" layout-align="center stretch")
+    div(layout="column" layout-align="center stretch")
+        md-input-container.skinny
+            label Name
+            input(required ng-model="main.name")
 
         md-input-container.skinny
             label Lobby Code
-            input
+            input(required ng-model="main.code")
 
+
+        md-button.md-primary.md-raised(
+            ng-click="main.join()"
+            ) Join Lobby
+
+    div.splash-divider(layout="row" layout-align="center center")
+        hr.splash(flex)
+        span.md-caption.splash-divider or
+        hr.splash(flex)
+
+    div(layout="column" layout-align="center stretch")
         md-input-container.skinny
             label Name
-            input
+            input(required md-no-asterisk ng-model="main.name")
 
-        md-button.md-primary.md-raised Join Lobby
-
-        div.splash-divider(layout="row" layout-align="center center")
-            hr.splash(flex)
-            span.md-caption.splash-divider or
-            hr.splash(flex)
-
-        md-button.md-accent.md-raised Create Lobby
+        md-button.md-accent.md-raised(
+            ng-click="main.create()"
+            ) Create Lobby
 
         p.md-caption.splash-warning.
             By creating a lobby, you will become the banker of the lobby, and
