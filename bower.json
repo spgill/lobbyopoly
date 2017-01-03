@@ -1,0 +1,12 @@
+{
+    "name": "monopoly-manager",
+    "private": true,
+    "dependencies": {
+        "angular": "latest",
+        "angular-cookies": "latest",
+        "angular-material": "latest",
+        "angular-ui-router": "latest",
+        "angular-socket-io": "latest",
+        "socket.io": "latest"
+    }
+}
