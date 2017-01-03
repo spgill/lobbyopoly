@@ -11,5 +11,5 @@ app.config(function ($mdThemingProvider) {
         })
         .warnPalette('yellow')
 
-    $mdThemingProvider.enableBrowserColor()
+    $mdThemingProvider.enableBrowserColor({hue: '600'})
 })

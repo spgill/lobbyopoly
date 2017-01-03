@@ -1,0 +1,19 @@
+div.splash-divider {
+    margin: 8px 0 8px 0;
+
+    hr {
+        border: 1px solid rgba(0, 0, 0, 0.117647);
+    }
+
+    span {
+        margin: 0 8px 0 8px;
+    }
+}
+
+p.splash-warning {
+    max-width: 187px;
+    margin-left: auto;
+    margin-right: auto;
+
+    text-align: justify;
+}

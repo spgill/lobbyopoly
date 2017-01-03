@@ -12,8 +12,13 @@ div(layout-fill layout="column" layout-align="center center")
 
         md-button.md-primary.md-raised Join Lobby
 
-        span(style="height: 12px;")
-        span(style="text-align: center;").md-caption or
-        span(style="height: 12px;")
+        div.splash-divider(layout="row" layout-align="center center")
+            hr.splash(flex)
+            span.md-caption.splash-divider or
+            hr.splash(flex)
 
         md-button.md-accent.md-raised Create Lobby
+
+        p.md-caption.splash-warning.
+            By creating a lobby, you will become the banker of the lobby, and
+            will be responsible for policing the finances of the game.
