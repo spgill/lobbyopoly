@@ -31,6 +31,7 @@ class Lobby(db.Document):
     code = db.StringField(max_length=4)
     bank = db.IntField(min_value=0, default=15140)
     banker = db.StringField()
+    parking = db.IntField(min_value=0, default=0)
     players = db.EmbeddedDocumentListField(Player)
 
 
@@ -56,6 +57,7 @@ def lobby_update(lob):
     # Bank information
     payload['bank'] = lob.bank
     payload['banker'] = lob.banker
+    payload['parking'] = lob.parking
 
     # Iterate through the players, sending them the message AND their balance
     for ply in lob.players:

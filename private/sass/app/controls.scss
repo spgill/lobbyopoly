@@ -11,6 +11,13 @@ div.controls-card {
     border: 2px solid white;
 }
 
+.control-avatar-bank {
+    width: 64px;
+    height: 64px;
+    font-size: 60px;
+    // border: 2px solid white;
+}
+
 .control-avatar-button {
     width: 24px;
     height: 24px;
@@ -29,4 +36,5 @@ div.controls-card {
 
 .control-divider {
     border: 1px solid rgba(0, 0, 0, 0.05);
+    width: 100%;
 }

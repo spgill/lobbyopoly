@@ -33,6 +33,7 @@ app.controller('LobbyController', function($http, $state, $stateParams, $mdDialo
     this.players = []
     this.bank = 0
     this.banker = false
+    this.parking = 0
 
     //- FUNCTIONS
     // Init function to connect to the lobby
@@ -84,11 +85,15 @@ app.controller('LobbyController', function($http, $state, $stateParams, $mdDialo
         this.banker = response.payload.banker
         this.players = response.payload.players
         this.balance = response.payload.balance
+        this.parking = response.payload.parking
     })
 })
 
 
 // Controller for player controls (lol)
-app.controller('PlayerControlsController', function() {
-    this.what = 'is up, my dudes'
+app.controller('PlayerControlsController', function($attrs) {
+    this.banker = $attrs.banker
+    this.parking = $attrs.parking
+
+    console.log(this.banker, this.parking)
 })
