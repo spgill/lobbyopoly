@@ -7,7 +7,7 @@ div(layout-fill layout="column" layout-align="center center")
 
         md-input-container.skinny
             label Lobby Code
-            input(required ng-model="main.code")
+            input(required md-no-asterisk ng-model="main.code")
 
         md-button.md-primary.md-raised(
             ng-click="main.join()"
@@ -19,14 +19,10 @@ div(layout-fill layout="column" layout-align="center center")
         hr.splash(flex)
 
     div(layout="column" layout-align="center stretch")
-        md-input-container.skinny
-            label Name
-            input(required md-no-asterisk ng-model="main.name")
-
-        md-button.md-accent.md-raised(
+        md-button.md-accent(
             ng-click="main.create()"
             ) Create Lobby
 
         p.md-caption.splash-warning.
-            By creating a lobby, you will become the banker of the lobby, and
+            * - Required. By creating a lobby, you will become the banker of the lobby, and
             will be responsible for policing the finances of the game.

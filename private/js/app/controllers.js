@@ -2,7 +2,7 @@ app = angular.module('spgill.MonopolyManager.controllers', ['spgill.MonopolyMana
 
 
 // Controller for splash state
-app.controller('SplashController', function($state) {
+app.controller('SplashController', function($http, $state) {
     this.join = () => {
         if (this.code && this.name) {
             $state.go('lobby', {
@@ -14,7 +14,17 @@ app.controller('SplashController', function($state) {
 
     this.create = () => {
         if (this.name) {
-
+            $http.get('/api/lobby_create', {
+                params: {
+                    name: this.name
+                }
+            })
+            .then((response) => {
+                $state.go('lobby', {
+                    code: response.data,
+                    name: this.name
+                })
+            })
         }
     }
 })

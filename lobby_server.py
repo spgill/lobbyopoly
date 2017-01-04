@@ -1,4 +1,6 @@
+import datetime
 import os
+import random
 
 import flask
 from flask_mongoengine import MongoEngine
@@ -33,6 +35,7 @@ class Lobby(db.Document):
     banker = db.StringField()
     parking = db.IntField(min_value=0, default=0)
     players = db.EmbeddedDocumentListField(Player)
+    expires = db.DateTimeField()
 
 
 # Index redirect
@@ -41,9 +44,30 @@ def index_redirect():
     return flask.redirect('/html/index.html')
 
 
-@app.route('/test')
-def test():
-    return 'lol'
+def lobby_generate():
+    abet = 'ABCDEFGHIJKMNPQRSTUVWXYZ123456789'
+    while True:
+        code = random.choices(abet, k=4)
+        try:
+            Lobby.objects(code=code).get()
+        except db.DoesNotExist:
+            return ''.join(code)
+
+
+@app.route('/api/lobby_create')
+def api_lobby_create():
+    print('CREATE', flask.request.args['name'])
+    # Generate a unique lobby code
+    code = lobby_generate()
+
+    # Create a new lobby document
+    Lobby(
+        code=code,
+        banker=flask.request.args['name'],
+        expires=datetime.datetime.utcnow() + datetime.timedelta(hours=48)
+    ).save()
+
+    return code
 
 
 def lobby_update(lob, message=None, message_exclude=None):
