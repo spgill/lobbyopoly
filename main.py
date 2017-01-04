@@ -12,7 +12,7 @@ socketserver.ForkingMixIn = null
 
 import os
 
-from monopoly_server import app, socket
+from lobby_server import app, socket
 
 
 def main():
