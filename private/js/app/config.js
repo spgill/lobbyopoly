@@ -1,5 +1,6 @@
 app = angular.module('spgill.MonopolyManager.config', ['spgill.MonopolyManager'])
 
+
 // Configure the theme
 app.config(function ($mdThemingProvider) {
     $mdThemingProvider.theme('default')
@@ -12,4 +13,10 @@ app.config(function ($mdThemingProvider) {
         .warnPalette('yellow')
 
     $mdThemingProvider.enableBrowserColor({hue: '600'})
+})
+
+
+// Configure the socket.io factory
+app.factory('socket', function(socketFactory) {
+    return socketFactory()
 })

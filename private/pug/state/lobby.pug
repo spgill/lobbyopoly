@@ -1,1 +1,24 @@
-player-controls(banker)
+//- Loading animation
+div(
+    layout-fill
+    ng-init="lobby.connect()"
+    ng-show="lobby.loading"
+    layout="column"
+    layout-align="center center"
+    )
+    md-progress-circular.md-accent(
+        md-mode="indeterminate"
+        md-diameter="62"
+        )
+
+
+//- Content to show when no longer loading
+div(
+    layout-fill
+    ng-hide="lobby.loading"
+    )
+    player-controls
+    player-controls(
+        ng-if="lobby.banker == lobby.player"
+        banker
+        )

@@ -7,6 +7,5 @@
         "angular-material": "latest",
         "angular-ui-router": "latest",
         "angular-socket-io": "latest",
-        "socket.io": "latest"
     }
 }

@@ -21,8 +21,57 @@ app.controller('SplashController', function($state) {
 
 
 // Controller for lobby state
-app.controller('LobbyController', function($state) {
+app.controller('LobbyController', function($http, $state, $stateParams, $mdDialog, $mdToast, socket) {
+    //- Unpack state params
+    this.lobby_code = $stateParams.code
+    this.lobby_name = $stateParams.name
+    this.player = $stateParams.name
 
+    //- VARIABLES
+    this.loading = true
+    this.balance = 0
+    this.players = []
+    this.bank = 0
+    this.banker = false
+
+    //- FUNCTIONS
+    // Init function to connect to the lobby
+    this.connect = () => {
+        socket.emit('player.connect', {
+            code: this.lobby_code,
+            name: this.lobby_name
+        })
+    }
+
+    //- Connection completion event
+    socket.on('player.connect complete', () => {
+        this.loading = false
+    })
+
+    //- Error handling event
+    socket.on('error', (response) => {
+        $mdDialog.show(
+            $mdDialog.alert()
+            .title('Problem loading lobby')
+            .textContent(response.data.message)
+            .ok('Dismiss')
+        ).then(() => {
+            if (this.loading) {
+                $state.go('splash')
+            }
+        })
+    })
+
+    //- Update event handling
+    socket.on('update', (response) => {
+        console.log('Update Received', response)
+
+        // Unpack the data
+        this.bank = response.payload.bank
+        this.banker = response.payload.banker
+        this.players = response.payload.players
+        this.balance = response.payload.balance
+    })
 })
 
 
