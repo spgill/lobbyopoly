@@ -43,6 +43,19 @@ app.controller('LobbyController', function($http, $state, $stateParams, $mdDialo
         })
     }
 
+    // Function to determine if the local player is the banker or not
+    this.is_banker = () => {
+        return this.player == this.banker
+    }
+
+    // Function to generate the avatar URL
+    this.avatar = (name=false) => {
+        if (name == false) {
+            name = this.lobby_name
+        }
+        return `http://api.adorable.io/avatars/196/${this.lobby_code}${name}.png`
+    }
+
     //- Connection completion event
     socket.on('player.connect complete', () => {
         this.loading = false

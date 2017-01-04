@@ -1,1 +1,27 @@
-p what {{ controls.what }}
+div.controls-card(md-whiteframe="6")
+    div(layout="row" layout-align="start center")
+        img.control-avatar(ng-src="{{ lobby.avatar() }}")
+        div(layout="column")
+            span.control-name.md-display-1 {{ lobby.player }}
+            span.control-title.md-caption {{ lobby.is_banker() ? 'Banker' : 'Player' }}
+        span(flex)
+        span.control-balance.md-display-3 ${{ lobby.balance }}
+    hr.control-divider
+    div(layout="row" layout-align="space-around")
+        md-menu(flex)
+            md-button.md-accent.md-raised(
+                layout-fill
+                ng-click="$mdOpenMenu($event)"
+                ) Transfer Money
+            md-menu-content(width="7")
+                md-menu-item
+                    md-button
+                        md-icon account_balance
+                        span Bank
+                md-menu-item(
+                    ng-repeat="ply in lobby.players"
+                    ng-if="ply != lobby.player"
+                    )
+                    md-button
+                        img.control-avatar-button(ng-src="{{ lobby.avatar(ply) }}")
+                        span {{ ply }}
