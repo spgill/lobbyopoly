@@ -46,7 +46,7 @@ def test():
     return 'lol'
 
 
-def lobby_update(lob):
+def lobby_update(lob, message=None, message_exclude=None):
     """Send updates to all players in the lobby."""
     # Start with an empty message
     payload = {}
@@ -63,7 +63,10 @@ def lobby_update(lob):
     for ply in lob.players:
         emit(
             'update',
-            helpers.api_success({**payload, 'balance': ply.balance}),
+            helpers.api_success(
+                payload={**payload, 'balance': ply.balance},
+                message=message
+            ),
             room=ply.session
         )
 
@@ -106,4 +109,7 @@ def socket_player_connect(data):
     emit('player.connect complete')
 
     # Send an update to all lobby players
-    lobby_update(lobby)
+    lobby_update(
+        lobby,
+        f'{ply.name} has joined the lobby'
+    )

@@ -1,0 +1,31 @@
+div.lobby-log-card {
+    margin: 8px;
+
+    background-color: #e87024;
+
+    md-list > * {
+        background-color: transparent;
+    }
+
+    // md-list-item.header {
+    //     md-icon {
+    //         color: darken(#e87024, 20%);
+    //     }
+    //     h3 {
+    //         color: darken(#e87024, 20%);
+    //     }
+    // }
+
+    md-list-item {
+        height: 48px;
+
+        .gutter {
+            width: 5ch;
+            margin-right: 8px;
+        }
+
+        .darken {
+            color: darken(#e87024, 20%);
+        }
+    }
+}

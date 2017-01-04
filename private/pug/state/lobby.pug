@@ -20,3 +20,16 @@ div(
     player-controls(mode="player")
     player-controls(mode="bank")
     player-controls(mode="parking")
+
+    //- Activity log
+    div.lobby-log-card(md-whiteframe="6")
+        md-list.md-dense
+            md-list-item
+                div.gutter(layout="row" layout-align="center")
+                    md-icon.darken schedule
+                div.darken Activity Log
+            md-list-item(
+                ng-repeat="entry in lobby.log"
+                )
+                span.gutter {{ entry[0] }}
+                h6.message {{ entry[1] }}

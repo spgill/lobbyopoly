@@ -34,6 +34,7 @@ app.controller('LobbyController', function($http, $state, $stateParams, $mdDialo
     this.bank = 0
     this.banker = false
     this.parking = 0
+    this.log = []
 
     //- FUNCTIONS
     // Init function to connect to the lobby
@@ -86,5 +87,12 @@ app.controller('LobbyController', function($http, $state, $stateParams, $mdDialo
         this.players = response.payload.players
         this.balance = response.payload.balance
         this.parking = response.payload.parking
+
+        // If there's a message attached, add it to the log
+        if (response.message) {
+            let date = new Date()
+            let stamp = `${date.getHours()}:${date.getMinutes()}`
+            this.log.splice(0, 0, [stamp, response.message])
+        }
     })
 })
