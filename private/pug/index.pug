@@ -6,14 +6,13 @@ html(ng-app="spgill.MonopolyManager" ng-cloak)
     body(layout="column")
 
         //- Toolbar
-        md-toolbar
+        md-toolbar(ng-controller="ToolbarController as toolbar")
             div.md-toolbar-tools.rapper
                 span.kabel LobbyOPOLY
 
                 span.flex
 
-                //- md-button.md-icon-button
-                //-     md-icon more_vert
+                span {{ toolbar.global.lobby_code }}
 
         //- Content/Router view
         md-content.rapper(flex ui-view)

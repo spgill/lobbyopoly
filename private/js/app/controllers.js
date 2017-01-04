@@ -1,6 +1,12 @@
 app = angular.module('spgill.MonopolyManager.controllers', ['spgill.MonopolyManager'])
 
 
+// Controller for toolbar
+app.controller('ToolbarController', function($rootScope) {
+    this.global = $rootScope
+})
+
+
 // Controller for splash state
 app.controller('SplashController', function($http, $state) {
     this.join = () => {
@@ -31,7 +37,7 @@ app.controller('SplashController', function($http, $state) {
 
 
 // Controller for lobby state
-app.controller('LobbyController', function($http, $state, $stateParams, $mdDialog, $mdToast, socket) {
+app.controller('LobbyController', function($rootScope, $http, $state, $stateParams, $mdDialog, $mdToast, socket) {
     //- Unpack state params
     this.lobby_code = $stateParams.code
     this.lobby_name = $stateParams.name
@@ -87,6 +93,7 @@ app.controller('LobbyController', function($http, $state, $stateParams, $mdDialo
     // Connection completion event
     socket.on('player.connect complete', () => {
         this.loading = false
+        $rootScope.lobby_code = this.lobby_code
     })
 
     // Error handling event
