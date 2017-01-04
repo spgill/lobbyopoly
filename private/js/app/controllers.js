@@ -58,17 +58,33 @@ app.controller('LobbyController', function($http, $state, $stateParams, $mdDialo
         return `http://api.adorable.io/avatars/196/${this.lobby_code}${name}.png`
     }
 
-    //- Connection completion event
+    // Transfer money
+    this.transfer = (from, to) => {
+        if (from == 'player') {
+            from = this.player
+        } else {
+            from = `__${from}__`
+        }
+
+        socket.emit('transfer', {
+            code: this.lobby_code,
+            amount: 100,
+            from: from,
+            to: to
+        })
+    }
+
+    // Connection completion event
     socket.on('player.connect complete', () => {
         this.loading = false
     })
 
-    //- Error handling event
+    // Error handling event
     socket.on('error', (response) => {
         $mdDialog.show(
             $mdDialog.alert()
-            .title('Problem loading lobby')
-            .textContent(response.data.message)
+            .title('Error encountered')
+            .textContent(response.message)
             .ok('Dismiss')
         ).then(() => {
             if (this.loading) {
@@ -77,7 +93,7 @@ app.controller('LobbyController', function($http, $state, $stateParams, $mdDialo
         })
     })
 
-    //- Update event handling
+    // Update event handling
     socket.on('update', (response) => {
         console.log('Update Received', response)
 

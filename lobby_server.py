@@ -93,16 +93,18 @@ def socket_player_connect(data):
     # If player is returning, update their session id
     if ply:
         ply.session = flask.request.sid
-        ply.save()
+        lobby.save()
 
     # If user is new, add them to the lobby
     if not ply:
         ply = Player(
             name=data['name'],
-            session=flask.request.sid
+            session=flask.request.sid,
+            balance=1500
         )
 
         lobby.players.append(ply)
+        lobby.bank -= 1500
         lobby.save()
 
     # Finally, emit the completion
@@ -113,3 +115,68 @@ def socket_player_connect(data):
         lobby,
         f'{ply.name} has joined the lobby'
     )
+
+
+def balance_get(lob, name):
+    if name == '__bank__':
+        return lob.bank
+    elif name == '__parking__':
+        return lob.parking
+    else:
+        for ply in lob.players:
+            if ply.name == name:
+                return ply.balance
+
+
+def balance_set(lob, name, amount):
+    if name == '__bank__':
+        lob.bank = amount
+    elif name == '__parking__':
+        lob.parking = amount
+    else:
+        for ply in lob.players:
+            if ply.name == name:
+                ply.balance = amount
+                break
+    lob.save()
+
+
+@socket.on('transfer')
+def socket_transfer(data):
+    """Transfer money from one account to the other."""
+    # Fetch the lobby
+    lob = Lobby.objects(code=data['code']).get()
+
+    # Get the from balance and check for sufficient funds
+    from_balance = balance_get(lob, data['from'])
+
+    if from_balance < data['amount']:
+        print('INSUFFICIENT')
+        emit('error', helpers.api_error(
+            message='Insufficient balance'
+        ))
+        return
+
+    # Update the from balance
+    balance_set(lob, data['from'], from_balance - data['amount'])
+
+    # Update the to balance
+    balance_set(lob, data['to'], balance_get(lob, data['to']) + data['amount'])
+
+    # Construct a message
+    from_name = data['from']
+    if from_name == '__bank__':
+        from_name = 'The Bank'
+    elif from_name == '__parking__':
+        from_name = 'Free Parking'
+
+    to_name = data['to']
+    if to_name == '__bank__':
+        to_name = 'the Bank'
+    elif to_name == '__parking__':
+        to_name = 'Free Parking'
+    elif to_name == '__everyone__':
+        to_name = 'Everyone'
+
+    # Broadcast an update with a message
+    lobby_update(lob, f'{from_name} sent ${data["amount"]} to {to_name}')
