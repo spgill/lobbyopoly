@@ -1,7 +1,7 @@
 div.controls-card(md-whiteframe="6")
 
     //- Top row for player
-    div(layout="row" layout-align="start center" ng-if="!control.banker && !control.parking")
+    div(layout="row" layout-align="start center" ng-if="control.mode == 'player'")
         img.control-avatar(ng-src="{{ lobby.avatar() }}")
         div(layout="column")
             span.control-name.md-display-1 {{ lobby.player }}
@@ -10,21 +10,21 @@ div.controls-card(md-whiteframe="6")
         span.control-balance.md-display-3 ${{ lobby.balance }}
 
     //- Top row for bank
-    div(layout="row" layout-align="start center" ng-if="control.banker")
+    div(layout="row" layout-align="start center" ng-if="control.mode == 'bank'")
         md-icon.control-avatar-bank.md-primary account_balance
         span.md-display-1 Bank
         span(flex)
         span.control-balance.md-display-3 ${{ lobby.bank }}
 
     //- Top row for parking
-    div(layout="row" layout-align="start center" ng-if="control.parking")
+    div(layout="row" layout-align="start center" ng-if="control.mode == 'parking'")
         md-icon.control-avatar-bank.md-warn.md-hue-2 directions_car
         span.md-title Free<br>Parking
         span(flex)
         span.control-balance.md-display-3 ${{ lobby.parking }}
 
     div(
-        ng-if="(!control.banker && !control.parking) || lobby.is_banker()"
+        ng-if="(control.mode != 'bank' && control.mode != 'parking') || lobby.is_banker()"
         layout="column" layout-align="start stretch"
         )
         hr.control-divider
@@ -35,12 +35,12 @@ div.controls-card(md-whiteframe="6")
                 ) Send Money
             md-menu-content(width="7")
                 //- Bank icon, for players
-                md-menu-item(ng-if="!control.banker")
+                md-menu-item(ng-if="control.mode != 'bank'")
                     md-button
                         md-icon account_balance
                         span Bank
                 //- Everyone icon, for bankers
-                md-menu-item(ng-if="control.banker")
+                md-menu-item(ng-if="control.mode == 'bank'")
                     md-button
                         md-icon select_all
                         span Everyone
@@ -51,7 +51,7 @@ div.controls-card(md-whiteframe="6")
                         span Free Parking
                 md-menu-item(
                     ng-repeat="ply in lobby.players"
-                    ng-if="(ply != lobby.player) || control.banker"
+                    ng-if="(ply != lobby.player) || control.mode == 'bank'"
                     )
                     md-button
                         img.control-avatar-button(ng-src="{{ lobby.avatar(ply) }}")

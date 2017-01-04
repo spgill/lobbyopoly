@@ -88,12 +88,3 @@ app.controller('LobbyController', function($http, $state, $stateParams, $mdDialo
         this.parking = response.payload.parking
     })
 })
-
-
-// Controller for player controls (lol)
-app.controller('PlayerControlsController', function($attrs) {
-    this.banker = $attrs.banker
-    this.parking = $attrs.parking
-
-    console.log(this.banker, this.parking)
-})

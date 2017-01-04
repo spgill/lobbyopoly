@@ -6,6 +6,8 @@ app.directive('playerControls', function() {
     return {
         restrict: 'E',
         templateUrl: '/html/template/controls.html',
-        controller: 'PlayerControlsController as control'
+        controller: function($attrs) { this.mode = $attrs.mode },
+        controllerAs: 'control',
+        scope: true
     }
 })

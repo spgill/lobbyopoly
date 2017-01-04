@@ -17,6 +17,6 @@ div(
     layout-fill
     ng-hide="lobby.loading"
     )
-    player-controls
-    player-controls(ng-if="true" banker)
-    player-controls(ng-if="true" parking)
+    player-controls(mode="player")
+    player-controls(mode="bank")
+    player-controls(mode="parking")
