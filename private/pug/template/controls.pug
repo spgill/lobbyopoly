@@ -4,7 +4,7 @@ div.controls-card(md-whiteframe="6")
     div(layout="row" layout-align="start center" ng-if="control.mode == 'player'")
         img.control-avatar(ng-src="{{ lobby.avatar() }}")
         div(layout="column")
-            span.control-name.md-display-1 {{ lobby.player }}
+            span.control-name.md-headline {{ lobby.player }}
             span.control-title.md-caption {{ lobby.is_banker() ? 'Banker' : 'Player' }}
         span(flex)
         span.control-balance.md-display-3 ${{ lobby.balance }}
