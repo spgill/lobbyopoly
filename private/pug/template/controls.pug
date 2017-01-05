@@ -7,7 +7,7 @@ div.controls-card(md-whiteframe="6")
             span.control-name.md-headline {{ lobby.player }}
             span.control-title.md-caption {{ lobby.is_banker() ? 'Banker' : 'Player' }}
         span(flex)
-        span.control-balance.md-display-3 ${{ lobby.balance }}
+        span.control-balance.md-display-3 ${{ lobby.players[lobby.player] }}
 
     //- Top row for bank
     div(layout="row" layout-align="start center" ng-if="control.mode == 'bank'")
@@ -63,10 +63,10 @@ div.controls-card(md-whiteframe="6")
 
                 //- Repeating buttons for players (minus self, if in player controls)
                 md-menu-item(
-                    ng-repeat="ply in lobby.players"
-                    ng-click="lobby.transfer($event, control.mode, ply)"
-                    ng-if="(ply != lobby.player) || control.mode == 'bank'"
+                    ng-repeat="(name, balance) in lobby.players"
+                    ng-click="lobby.transfer($event, control.mode, name)"
+                    ng-if="(name != lobby.player) || control.mode == 'bank'"
                     )
                     md-button
-                        img.control-avatar-button(ng-src="{{ lobby.avatar(ply) }}")
-                        span {{ ply }}
+                        img.control-avatar-button(ng-src="{{ lobby.avatar(name) }}")
+                        span {{ name }}

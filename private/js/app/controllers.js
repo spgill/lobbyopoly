@@ -54,8 +54,7 @@ app.controller('LobbyController', function($rootScope, $http, $state, $statePara
 
     //- VARIABLES
     this.loading = true
-    this.balance = 0
-    this.players = []
+    this.players = {}
     this.bank = 0
     this.banker = false
     this.parking = 0
@@ -141,7 +140,6 @@ app.controller('LobbyController', function($rootScope, $http, $state, $statePara
         this.bank = response.payload.bank
         this.banker = response.payload.banker
         this.players = response.payload.players
-        this.balance = response.payload.balance
         this.parking = response.payload.parking
 
         // If there's a message attached, add it to the log

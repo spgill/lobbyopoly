@@ -76,7 +76,7 @@ def lobby_update(lob, message=None, message_exclude=None):
     payload = {}
 
     # Populate the players list
-    payload['players'] = [ply.name for ply in lob.players]
+    payload['players'] = {ply.name: ply.balance for ply in lob.players}
 
     # Bank information
     payload['bank'] = lob.bank
@@ -88,7 +88,7 @@ def lobby_update(lob, message=None, message_exclude=None):
         emit(
             'update',
             helpers.api_success(
-                payload={**payload, 'balance': ply.balance},
+                payload=payload,
                 message=message
             ),
             room=ply.session
