@@ -1,0 +1,27 @@
+md-dialog(
+    layout-padding
+    layout="column"
+    layout-align="start stretch"
+    )
+    span.md-caption
+        em How much do you want to send?
+    div(layout="row" layout-align="space-between center")
+        span.md-display-3 ${{ prompt.amount }}
+        md-button.md-icon-button.md-primary(ng-click="prompt.add(-prompt.amount)")
+            md-icon refresh
+    div.nopadding(layout="row")
+        md-button.md-raised.prompt-bill.one(flex ng-click="prompt.add(1)") $1
+        md-button.md-raised.prompt-bill.five(flex ng-click="prompt.add(5)") $5
+        md-button.md-raised.prompt-bill.ten(flex ng-click="prompt.add(10)") $10
+    div.nopadding(layout="row")
+        md-button.md-raised.prompt-bill.twenty(flex ng-click="prompt.add(20)") $20
+        md-button.md-raised.prompt-bill.fifty(flex ng-click="prompt.add(50)") $50
+        md-button.md-raised.prompt-bill.hundred(flex ng-click="prompt.add(100)") $100
+    div.nopadding(layout="row")
+        md-button.md-raised.prompt-bill.fivehundred(flex ng-click="prompt.add(500)") $500
+
+    div.nopadding(layout="row" style="border-top: 1px solid rgba(0, 0, 0, 0.15);")
+        md-button.md-accent(flex ng-click="prompt.cancel()") Cancel
+        md-button.md-primary.md-raised(flex ng-click="prompt.send()")
+            span(style="margin-right: 8px;") Send
+            md-icon send

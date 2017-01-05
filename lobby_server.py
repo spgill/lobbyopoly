@@ -168,6 +168,7 @@ def balance_set(lob, name, amount):
 @socket.on('transfer')
 def socket_transfer(data):
     """Transfer money from one account to the other."""
+    print('TRANSFER', data)
     # Fetch the lobby
     lob = Lobby.objects(code=data['code']).get()
 

@@ -1,4 +1,4 @@
-div(layout-fill layout="column" layout-align="center center")
+div(layout-fill layout="column" layout-align="center center" ng-init="main.toolbar_wipe()")
 
     div(layout="column" layout-align="center stretch")
         md-input-container.skinny
@@ -24,5 +24,5 @@ div(layout-fill layout="column" layout-align="center center")
             ) Create Lobby
 
         p.md-caption.splash-warning.
-            * - Required. By creating a lobby, you will become the banker of the lobby, and
+            * - Required to create lobby. By creating a lobby, you will become the banker of the lobby, and
             will be responsible for policing the finances of the game.

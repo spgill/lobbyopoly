@@ -8,11 +8,15 @@ app.controller('ToolbarController', function($rootScope) {
 
 
 // Controller for splash state
-app.controller('SplashController', function($http, $state) {
+app.controller('SplashController', function($rootScope, $http, $state) {
+    this.toolbar_wipe = () => {
+        $rootScope.lobby_code = ''
+    }
+
     this.join = () => {
         if (this.code && this.name) {
             $state.go('lobby', {
-                code: this.code,
+                code: this.code.toUpperCase(),
                 name: this.name
             })
         }
@@ -34,6 +38,11 @@ app.controller('SplashController', function($http, $state) {
         }
     }
 })
+
+
+pad = (n) => {
+    return ('00' + n).slice(-2)
+}
 
 
 // Controller for lobby state
@@ -74,19 +83,33 @@ app.controller('LobbyController', function($rootScope, $http, $state, $statePara
         return `http://api.adorable.io/avatars/196/${this.lobby_code}${name}.png`
     }
 
+    // Prompt the user for an amount to send
+    this.prompt_amount = (ev) => {
+        return $mdDialog.show({
+            templateUrl: '/html/template/prompt.html',
+            autoWrap: true,
+            openFrom: ev,
+            closeTo: 'div.lobby-log-card',
+            controller: 'PromptAmountController',
+            controllerAs: 'prompt'
+        })
+    }
+
     // Transfer money
-    this.transfer = (from, to) => {
+    this.transfer = (ev, from, to) => {
         if (from == 'player') {
             from = this.player
         } else {
             from = `__${from}__`
         }
 
-        socket.emit('transfer', {
-            code: this.lobby_code,
-            amount: 100,
-            from: from,
-            to: to
+        this.prompt_amount(ev).then((n) => {
+            socket.emit('transfer', {
+                code: this.lobby_code,
+                amount: n,
+                from: from,
+                to: to
+            })
         })
     }
 
@@ -124,8 +147,28 @@ app.controller('LobbyController', function($rootScope, $http, $state, $statePara
         // If there's a message attached, add it to the log
         if (response.message) {
             let date = new Date()
-            let stamp = `${date.getHours()}:${date.getMinutes()}`
+            let stamp = `${pad(date.getHours())}:${pad(date.getMinutes())}`
             this.log.splice(0, 0, [stamp, response.message])
         }
     })
+})
+
+
+//- Controller for Amount prompt
+app.controller('PromptAmountController', function($mdDialog) {
+    // VARIABLES
+    this.amount = 0
+
+    // FUNCTIONS
+    this.add = (n) => {
+        this.amount += n
+    }
+
+    this.send = () => {
+        $mdDialog.hide(this.amount)
+    }
+
+    this.cancel = () => {
+        $mdDialog.cancel(null)
+    }
 })

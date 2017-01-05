@@ -36,7 +36,7 @@ div.controls-card(md-whiteframe="6")
             md-menu-content(width="7")
                 //- Bank icon, for players
                 md-menu-item(
-                    ng-click="lobby.transfer(control.mode, '__bank__')"
+                    ng-click="lobby.transfer($event, control.mode, '__bank__')"
                     ng-if="control.mode != 'bank'"
                     )
                     md-button
@@ -45,7 +45,7 @@ div.controls-card(md-whiteframe="6")
 
                 //- Everyone icon, for bankers
                 //- md-menu-item(
-                //-     ng-click="lobby.transfer(control.mode, '__everyone__')"
+                //-     ng-click="lobby.transfer($event, control.mode, '__everyone__')"
                 //-     ng-if="control.mode == 'bank'"
                 //-     )
                 //-     md-button
@@ -54,7 +54,7 @@ div.controls-card(md-whiteframe="6")
 
                 //- Free parking button for all players
                 md-menu-item(
-                    ng-click="lobby.transfer(control.mode, '__parking__')"
+                    ng-click="lobby.transfer($event, control.mode, '__parking__')"
                     ng-if="control.mode != 'parking'"
                     )
                     md-button
@@ -64,7 +64,7 @@ div.controls-card(md-whiteframe="6")
                 //- Repeating buttons for players (minus self, if in player controls)
                 md-menu-item(
                     ng-repeat="ply in lobby.players"
-                    ng-click="lobby.transfer(control.mode, ply)"
+                    ng-click="lobby.transfer($event, control.mode, ply)"
                     ng-if="(ply != lobby.player) || control.mode == 'bank'"
                     )
                     md-button
