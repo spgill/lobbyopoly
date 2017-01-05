@@ -6,6 +6,6 @@
         "angular-cookies": "latest",
         "angular-material": "latest",
         "angular-ui-router": "latest",
-        "angular-socket-io": "latest",
+        "angular-socket-io": "latest"
     }
 }
