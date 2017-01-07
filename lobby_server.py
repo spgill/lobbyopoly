@@ -16,6 +16,14 @@ app.config['MONGODB_SETTINGS'] = {
     'host': os.environ.get('MONGODB_URI', None),
 }
 
+# If debug mode, inject a cache-clearing header into all responses
+if app.config['DEBUG']:
+    @app.after_request
+    def cache_clear(response):
+        '''Make sure all responses from the server are never cached'''
+        response.headers['Cache-Control'] = 'no-cache'
+        return response
+
 # Initialize SocketIO
 socket = SocketIO(app)
 
