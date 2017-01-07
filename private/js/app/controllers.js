@@ -2,8 +2,20 @@ app = angular.module('spgill.MonopolyManager.controllers', ['spgill.MonopolyMana
 
 
 // Controller for toolbar
-app.controller('ToolbarController', function($rootScope) {
+app.controller('ToolbarController', function($rootScope, $mdDialog) {
     this.global = $rootScope
+
+    this.rules = (ev) => {
+        $mdDialog.show({
+            templateUrl: '/html/template/rules.html',
+            autoWrap: false,
+            targetEvent: ev,
+            controller: ['$scope', '$mdDialog', function($scope, $mdDialog) {
+                $scope.cancel = $mdDialog.cancel
+            }],
+            fullscreen: true
+        })
+    }
 })
 
 
