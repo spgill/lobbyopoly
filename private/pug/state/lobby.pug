@@ -17,7 +17,15 @@ div(
     layout-fill
     ng-hide="lobby.loading"
     )
+
+
+
+    //- The actual control cards
     player-controls(mode="player")
+
+    //- Player list
+    //- div.player-list-card(md-whiteframe="6" ng-include="'/html/template/player-list.html'")
+
     player-controls(mode="bank")
     player-controls(mode="parking")
 

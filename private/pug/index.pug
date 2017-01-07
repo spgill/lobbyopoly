@@ -12,7 +12,17 @@ html(ng-app="spgill.MonopolyManager" ng-cloak)
 
                 span.flex
 
-                span {{ toolbar.global.lobby_code }}
+                div.toolbar-button(ng-if="toolbar.global.lobby_button")
+                    md-button.md-icon-button.md-raised(
+                        ng-click="toolbar.global.lobby_button($event)"
+                        )
+                        md-icon(md-colors="{'color': 'accent'}") people
+
+                div.toolbar-code
+                    div.spacer(ng-if="toolbar.global.lobby_button")
+                    span {{ toolbar.global.lobby_code }}
+
+
 
         //- Content/Router view
         md-content.rapper(flex ui-view)

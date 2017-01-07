@@ -112,6 +112,17 @@ app.controller('LobbyController', function($rootScope, $http, $state, $statePara
         })
     }
 
+    // Open the player list
+    this.player_list = (ev) => {
+        $mdDialog.show(
+            $mdDialog.alert()
+                .title('WIP!')
+                .textContent('Feature not currently available.')
+                .ok('Dismiss')
+                .targetEvent(ev)
+        )
+    }
+
     // Connection completion event
     socket.on('player.connect complete', () => {
         this.loading = false
@@ -141,6 +152,13 @@ app.controller('LobbyController', function($rootScope, $http, $state, $statePara
         this.banker = response.payload.banker
         this.players = response.payload.players
         this.parking = response.payload.parking
+
+        // Set the toolbar button flag
+        if (this.banker == this.player) {
+            $rootScope.lobby_button = this.player_list
+        } else {
+            $rootScope.lobby_button = null
+        }
 
         // If there's a message attached, add it to the log
         if (response.message) {

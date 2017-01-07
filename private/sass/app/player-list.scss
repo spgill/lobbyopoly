@@ -1,0 +1,21 @@
+.player-list-card {
+    margin: 8px;
+
+    background-color: #dfcf7a;
+
+    md-list > * {
+        background-color: transparent;
+    }
+    md-list-item {
+        height: 48px;
+
+        .gutter {
+            width: 5ch;
+            margin-right: 8px;
+        }
+
+        .darken {
+            color: darken(#dfcf7a, 20%);
+        }
+    }
+}
