@@ -83,14 +83,27 @@ app.controller('LobbyController', function($rootScope, $http, $state, $statePara
     }
 
     // Prompt the user for an amount to send
-    this.prompt_amount = (ev) => {
+    this.prompt_amount = (ev, from) => {
+        // Get the correct balance for the prompt's math special buttons
+        let balance = this.players[this.player]
+        if (from == '__bank__') {
+            balance = this.bank
+        } else if (from == '__parking__') {
+            balance = this.parking
+        }
+
+        // Show the dialog
         return $mdDialog.show({
             templateUrl: '/html/template/prompt.html',
             autoWrap: true,
             openFrom: ev,
             closeTo: 'div.lobby-log-card',
             controller: 'PromptAmountController',
-            controllerAs: 'prompt'
+            controllerAs: 'prompt',
+            locals: {
+                balance: balance
+            },
+            bindToController: true
         })
     }
 
@@ -102,7 +115,7 @@ app.controller('LobbyController', function($rootScope, $http, $state, $statePara
             from = `__${from}__`
         }
 
-        this.prompt_amount(ev).then((n) => {
+        this.prompt_amount(ev, from).then((n) => {
             socket.emit('transfer', {
                 code: this.lobby_code,
                 amount: n,
@@ -177,7 +190,7 @@ app.controller('PromptAmountController', function($mdDialog) {
 
     // FUNCTIONS
     this.add = (n) => {
-        this.amount += n
+        this.amount += Math.floor(n)
     }
 
     this.send = () => {
