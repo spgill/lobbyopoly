@@ -91,7 +91,7 @@ app.controller('LobbyController', function($rootScope, $http, $state, $statePara
         if (name == false) {
             name = this.lobby_name
         }
-        return `http://api.adorable.io/avatars/196/${this.lobby_code}${name}.png`
+        return `http://api.adorable.io/avatars/192/${this.lobby_code}${name}.png`
     }
 
     // Prompt the user for an amount to send
