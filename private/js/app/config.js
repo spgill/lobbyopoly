@@ -10,7 +10,7 @@ app.config(function ($mdThemingProvider) {
         .accentPalette('blue', {
             'default': '900'
         })
-        .warnPalette('yellow')
+        .warnPalette('deep-orange')
 
     $mdThemingProvider.enableBrowserColor({hue: '600'})
 })
