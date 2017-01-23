@@ -232,7 +232,7 @@ def socket_kick(data):
 
     # Save changes and emit updates
     lob.save()
-    lobby_update(lob, f'{data["name"]} kicked from lobby')
+    lobby_update(lob, f'{data["name"]} has been kicked from lobby')
     socket.emit('kicked', room=ply.session)
 
 
