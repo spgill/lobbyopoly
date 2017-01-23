@@ -32,14 +32,14 @@ html(ng-app="spgill.MonopolyManager" ng-cloak)
 
                         //- Rules item
                         md-menu-item
-                            md-button(ng-click="toolbar.rules()")
+                            md-button(ng-click="toolbar.rules($event)")
                                 div(flex layout="row")
                                     p(flex) Rules
                                     md-icon(md-menu-align-target) help
 
                         //- Players item
                         md-menu-item(ng-if="toolbar.global.lobby_button")
-                            md-button(ng-click="toolbar.global.lobby_button()")
+                            md-button(ng-click="toolbar.global.lobby_button($event)")
                                 div(flex layout="row")
                                     p(flex) Players
                                     md-icon(md-menu-align-target) people
