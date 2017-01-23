@@ -139,13 +139,19 @@ app.controller('LobbyController', function($rootScope, $http, $state, $statePara
 
     // Open the player list
     this.player_list = (ev) => {
-        $mdDialog.show(
-            $mdDialog.alert()
-                .title('WIP!')
-                .textContent('Feature not currently available.')
-                .ok('Dismiss')
-                .targetEvent(ev)
-        )
+        $mdDialog.show({
+            templateUrl: '/html/template/players.html',
+            autoWrap: false,
+            openFrom: ev,
+            controller: 'PlayerListController',
+            controllerAs: 'list',
+            locals: {
+                'players': this.players,
+                'lobby_code': this.lobby_code,
+                'banker': this.banker
+            },
+            bindToController: true
+        })
     }
 
     // Connection completion event
@@ -192,6 +198,11 @@ app.controller('LobbyController', function($rootScope, $http, $state, $statePara
             this.log.splice(0, 0, [stamp, response.message])
         }
     })
+
+    // You've been kicked
+    socket.on('kicked', (response) => {
+        $state.go('splash')
+    })
 })
 
 
@@ -211,5 +222,49 @@ app.controller('PromptAmountController', function($mdDialog) {
 
     this.cancel = () => {
         $mdDialog.cancel(null)
+    }
+})
+
+
+//- Controller for player list
+app.controller('PlayerListController', function($mdDialog, socket) {
+    this.avatar = (name) => {
+        return `http://api.adorable.io/avatars/192/${this.lobby_code}${name}.png`
+    }
+
+    this.kick = (ev, name) => {
+        $mdDialog.show(
+            $mdDialog.confirm()
+                .title('Kick player?')
+                .textContent(`Are you sure you want to kick ${name} from the lobby?`)
+                .ok('Yes')
+                .cancel('No')
+                .targetEvent(ev)
+        ).then(() => {
+            socket.emit('kick', {
+                'code': this.lobby_code,
+                'name': name
+            })
+        })
+    }
+
+    this.promote = (ev, name) => {
+        $mdDialog.show(
+            $mdDialog.confirm()
+                .title('Promote player?')
+                .textContent(`Are you sure you want to promote ${name} to banker? You will lose all priveleges as the current banker.`)
+                .ok('Yes')
+                .cancel('No')
+                .targetEvent(ev)
+        ).then(() => {
+            socket.emit('promote', {
+                'code': this.lobby_code,
+                'name': name
+            })
+        })
+    }
+
+    this.cancel = () => {
+        $mdDialog.cancel()
     }
 })

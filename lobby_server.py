@@ -213,3 +213,39 @@ def socket_transfer(data):
 
     # Broadcast an update with a message
     lobby_update(lob, f'{from_name} sent ${data["amount"]} to {to_name}')
+
+
+@socket.on('kick')
+def socket_kick(data):
+    """Kick a player from a lobby."""
+    # Fetch the lobby
+    lob = Lobby.objects(code=data['code']).get()
+
+    # Fetch the kicked player
+    ply = lob.players.get(name=data['name'])
+
+    # Transfer money back to the bank
+    lob.bank += ply.balance
+
+    # Remove the player
+    lob.players.remove(ply)
+
+    # Save changes and emit updates
+    lob.save()
+    lobby_update(lob, f'{data["name"]} kicked from lobby')
+    socket.emit('kicked', room=ply.session)
+
+
+@socket.on('promote')
+def socket_promote(data):
+    """Promote a player to the position of banker."""
+    # Fetch the lobby
+    lob = Lobby.objects(code=data['code']).get()
+
+    # Update the banker name
+    old = lob.banker
+    lob.banker = data['name']
+
+    # Save changes and emit updates
+    lob.save()
+    lobby_update(lob, f'{lob.banker} has replaced {old} as the banker')
