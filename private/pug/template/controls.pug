@@ -65,7 +65,7 @@ div.controls-card(md-whiteframe="6")
                 md-menu-item(
                     ng-repeat="(name, balance) in lobby.players"
                     ng-click="lobby.transfer($event, control.mode, name)"
-                    ng-if="(name != lobby.player) || control.mode == 'bank'"
+                    ng-if="(name != lobby.player) || control.mode != 'player'"
                     )
                     md-button
                         img.control-avatar-button(ng-src="{{ lobby.avatar(name) }}")
