@@ -180,15 +180,18 @@ def socket_transfer(data):
     # Fetch the lobby
     lob = Lobby.objects(code=data['code']).get()
 
+    # Make sure the transfer amount is above 0
+    if data['amount'] <= 0:
+        return emit('error', helpers.api_error(
+            message='Transfer amount must be greater than $0'
+        ))
+
     # Get the from balance and check for sufficient funds
     from_balance = balance_get(lob, data['from'])
-
     if from_balance < data['amount']:
-        print('INSUFFICIENT')
-        emit('error', helpers.api_error(
+        return emit('error', helpers.api_error(
             message='Insufficient balance'
         ))
-        return
 
     # Update the from balance
     balance_set(lob, data['from'], from_balance - data['amount'])
