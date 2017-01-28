@@ -7,6 +7,7 @@ from flask_mongoengine import MongoEngine
 from flask_socketio import SocketIO, send, emit
 
 import lobby_helpers as helpers
+import lobby_schema as schema
 
 # Initialize and configure the app
 app = flask.Flask(__name__, static_folder='public', static_url_path='')
@@ -31,21 +32,6 @@ socket = SocketIO(app)
 db = MongoEngine(app)
 
 
-class Player(db.EmbeddedDocument):
-    name = db.StringField()
-    balance = db.IntField(min_value=0, default=0)
-    session = db.StringField()
-
-
-class Lobby(db.Document):
-    code = db.StringField(max_length=4)
-    bank = db.IntField(min_value=0, default=15140)
-    banker = db.StringField()
-    parking = db.IntField(min_value=0, default=0)
-    players = db.EmbeddedDocumentListField(Player)
-    expires = db.DateTimeField()
-
-
 # Index redirect
 @app.route('/')
 def index_redirect():
@@ -57,7 +43,7 @@ def lobby_generate():
     while True:
         code = random.choices(abet, k=4)
         try:
-            Lobby.objects(code=code).get()
+            schema.Lobby.objects(code=code).get()
         except db.DoesNotExist:
             return ''.join(code)
 
@@ -69,7 +55,7 @@ def api_lobby_create():
     code = lobby_generate()
 
     # Create a new lobby document
-    Lobby(
+    schema.Lobby(
         code=code,
         banker=flask.request.args['name'],
         expires=datetime.datetime.utcnow() + datetime.timedelta(hours=48)
@@ -107,7 +93,7 @@ def lobby_update(lob, message=None, message_exclude=None):
 def socket_player_connect(data):
     # Fetch the lobby
     try:
-        lobby = Lobby.objects(code=data['code']).get()
+        lobby = schema.Lobby.objects(code=data['code']).get()
     except db.DoesNotExist:
         code = data['code']
         emit(
@@ -129,7 +115,7 @@ def socket_player_connect(data):
 
     # If user is new, add them to the lobby
     if not ply:
-        ply = Player(
+        ply = schema.Player(
             name=data['name'],
             session=flask.request.sid,
             balance=1500
@@ -178,7 +164,7 @@ def socket_transfer(data):
     """Transfer money from one account to the other."""
     print('TRANSFER', data)
     # Fetch the lobby
-    lob = Lobby.objects(code=data['code']).get()
+    lob = schema.Lobby.objects(code=data['code']).get()
 
     # Make sure the transfer amount is above 0
     if data['amount'] <= 0:
@@ -222,7 +208,7 @@ def socket_transfer(data):
 def socket_kick(data):
     """Kick a player from a lobby."""
     # Fetch the lobby
-    lob = Lobby.objects(code=data['code']).get()
+    lob = schema.Lobby.objects(code=data['code']).get()
 
     # Fetch the kicked player
     ply = lob.players.get(name=data['name'])
@@ -243,7 +229,7 @@ def socket_kick(data):
 def socket_promote(data):
     """Promote a player to the position of banker."""
     # Fetch the lobby
-    lob = Lobby.objects(code=data['code']).get()
+    lob = schema.Lobby.objects(code=data['code']).get()
 
     # Update the banker name
     old = lob.banker
