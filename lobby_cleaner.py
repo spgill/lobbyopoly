@@ -28,3 +28,4 @@ if __name__ == '__main__':
         # If the expiration datetime is before now, it's expired, so delete it
         if lob.expires < now:
             print(f'{lob.code} has expired')
+            lob.delete()
