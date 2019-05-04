@@ -1,11 +1,19 @@
 {
-  "name": "test",
-  "version": "0.1.0",
+  "name": "lobbyopoly",
+  "version": "0.0.0",
   "private": true,
   "dependencies": {
+    "@ibm/plex": "^1.4.1",
+    "axios": "^0.18.0",
+    "eslint": "^5.16.0",
+    "eslint-plugin-prettier": "^3.0.1",
+    "msgpack-lite": "^0.1.26",
+    "polished": "^3.2.0",
+    "prettier": "^1.17.0",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
-    "react-scripts": "0.9.x"
+    "react-scripts": "3.0.x",
+    "styled-components": "^4.2.0"
   },
   "devDependencies": {},
   "scripts": {
@@ -13,5 +21,20 @@
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
-  }
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app"
+    ],
+    "plugins": [
+      "prettier"
+    ]
+  },
+  "proxy": "https://localhost:5000/",
+  "browserslist": [
+    ">= 2%",
+    "not dead",
+    "not IE >= 0",
+    "not op_mini all"
+  ]
 }
