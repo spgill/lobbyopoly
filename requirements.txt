@@ -1,5 +1,5 @@
+click
 flask
-flask-socketio
 flask-mongoengine
-eventlet
+gevent
 mongoengine
