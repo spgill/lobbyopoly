@@ -23,6 +23,7 @@ def createApp():
     app = flask.Flask(__name__, static_folder=None)
     app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024  # 2 megabytes, fyi
     app.config["DEBUG"] = os.environ.get("FLASK_DEBUG", "").lower() == "true"
+    app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", "password")
 
     # Connect to the database
     app.config["MONGODB_HOST"] = os.environ.get("MONGODB_HOST", False)

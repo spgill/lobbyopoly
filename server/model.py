@@ -2,48 +2,35 @@
 import mongoengine as mongo
 
 
-# # Define the database model
-# class PrintAccount(mongoengine.Document):
-#     """A document representing parties allowed to print to the server."""
-
-#     meta = {"collection": "print_account"}
-
-#     # Basic fields
-#     secret = mongoengine.StringField()
-#     name = mongoengine.StringField()
-#     count = mongoengine.IntField(default=0)
-
-#     # Rate limiting fields
-#     rate = mongoengine.IntField(default=None)
-#     last = mongoengine.DateTimeField()
-
-
-# class PrintLog(mongoengine.Document):
-#     """A document representing a single received ticket."""
-
-#     meta = {"collection": "print_log"}
-
-#     date = mongoengine.DateTimeField()
-#     origin = mongoengine.StringField()
-#     size = mongoengine.IntField()
-#     account = mongoengine.ReferenceField("PrintAccount", required=False)
-#     note = mongoengine.StringField(default=None)
-#     dump = mongoengine.FileField()
-
-# Define the database model
 class Lobby(mongo.Document):
-    meta = {"collection": "lobby"}
+    """Object representing a single lobby of many players."""
 
-    token = mongo.StringField()
+    meta = {"collection": "lobbies"}
+
+    # Session information
+    code = mongo.StringField()
     created = mongo.DateTimeField()
     expires = mongo.DateTimeField()
-
     logHash = mongo.StringField()
 
-    playerNames = mongo.ListField(mongo.StringField())
+    # Player information
+    players = mongo.ListField(mongo.StringField())
     playerBalances = mongo.ListField(mongo.IntField())
 
+    # Banker information
     banker = mongo.IntField()
     bankerBalance = mongo.IntField()
 
+    # Other balances
     freeParking = mongo.IntField()
+
+
+class Event(mongo.Document):
+    """Object representing a single event in a lobby."""
+
+    meta = {"collection": "events"}
+
+    # Contents of the event
+    lobby = mongo.LazyReferenceField(Lobby)
+    time = mongo.DateTimeField()
+    text = mongo.StringField()
