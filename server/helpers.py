@@ -1,8 +1,10 @@
 # stdlib imports
+import gzip
 
 # vendor imports
 import flask
 import msgpack
+import werkzeug
 
 # local imports
 
@@ -19,12 +21,34 @@ def unpackMessage(payload):
     )
 
 
-# Default headers used for
+def parseRequest():
+    if flask.request.headers.get("content-type", "") != "application/msgpack":
+        raise werkzeug.exceptions.HTTPException(
+            response=flask.make_response(
+                ("Invalid Content-Type of request body", 400, {})
+            )
+        )
+    return unpackMessage(flask.request.data)
+
+
+# Default headers used for responses
 defaultHeaders = {"content-type": "application/msgpack"}
 
 
 def composeResponse(data):
-    return flask.make_response(packMessage(data), 200, defaultHeaders)
+    payload = packMessage(data)
+    headers = {}
+    headers.update(defaultHeaders)
+
+    # Compress payload in gzip if allowed by client
+    if (
+        "gzip" in flask.request.headers["accept-encoding"]
+        and len(payload) >= 32
+    ):
+        headers["content-encoding"] = "gzip"
+        payload = gzip.compress(payload, 5)
+
+    return flask.make_response(payload, 200, headers)
 
 
 def composeError(message="Server Error"):

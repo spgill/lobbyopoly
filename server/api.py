@@ -26,10 +26,10 @@ def createBlueprint():
 
         Currently just returns whether or not the user is in an active session.
         """
-        lobbyCode = None
+        lobbyId = None
 
         # If there's a lobby ID stored in the session try looking it up
-        if flask.session["lobbyId"]:
+        if "lobbyId" in flask.session:
             lobbyDocument = None
             try:
                 lobbyDocument = model.Lobby.objects.get(
@@ -45,10 +45,22 @@ def createBlueprint():
                 lobbyDocument
                 and lobbyDocument.expires > datetime.datetime.utcnow()
             ):
-                lobbyCode = lobbyDocument.code
+                lobbyId = lobbyDocument.code
 
         # Return all the data in msgpack format
-        return helpers.composeResponse({"lobby": lobbyCode})
+        return helpers.composeResponse({"lobby": lobbyId})
+
+    @blueprint.route("/api/join")
+    def api_join_code():
+        """
+        API for a user to join a lobby, by its code.
+        """
+        data = helpers.parseRequest()
+        print("DATA RECEIVED", data)
+
+        flask.session["test"] = "lol"
+
+        return helpers.composeResponse(True)
 
     # Return the finished blueprint
     return blueprint

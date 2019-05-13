@@ -32,6 +32,11 @@ def createApp():
     app.mongoConnection = flask_mongoengine.MongoEngine()
     app.mongoConnection.init_app(app)
 
+    # Configure flask to use mongodb for the session backend
+    app.session_interface = flask_mongoengine.MongoEngineSessionInterface(
+        app.mongoConnection
+    )
+
     # Register the API blueprint
     app.register_blueprint(api.createBlueprint())
 
