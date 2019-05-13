@@ -1,13 +1,20 @@
+# stdlib imports
+import datetime
+
 # vendor imports
+from bson.objectid import ObjectId
 import mongoengine as mongo
 
 
-class Player(mongo.Document):
+class Player(mongo.EmbeddedDocument):
     """Object representing a single player"""
 
     meta = {"collection": "players"}
 
     # Player information
+    id = mongo.ObjectIdField(
+        required=True, default=ObjectId, unique=True, primary_key=True
+    )
     name = mongo.StringField()
     balance = mongo.IntField()
 
@@ -24,14 +31,18 @@ class Lobby(mongo.Document):
     eventHash = mongo.StringField()
 
     # Player information
-    players = mongo.ListField(mongo.ReferenceField(Player))
+    players = mongo.EmbeddedDocumentListField(Player)
 
     # Banker information
-    banker = mongo.ReferenceField(Player)
+    banker = mongo.ObjectIdField()
     bank = mongo.IntField()
 
     # Other balances
     freeParking = mongo.IntField()
+
+    def hasExpired(self):
+        """Method to quickly check if the lobby has expired."""
+        return self.expires <= datetime.datetime.utcnow()
 
 
 class Event(mongo.Document):

@@ -1,7 +1,10 @@
 # stdlib imports
+import datetime
 import gzip
+import struct
 
 # vendor imports
+from bson.objectid import ObjectId
 import flask
 import msgpack
 import werkzeug
@@ -9,9 +12,25 @@ import werkzeug
 # local imports
 
 
+def _customEncoder(obj):
+    # Cast ObjectId's to strings
+    if isinstance(obj, ObjectId):
+        return str(obj)
+
+    # Custom type 0x30 is a UTC POSIX timestamp
+    elif isinstance(obj, datetime.datetime):
+        return msgpack.ExtType(
+            0x30,
+            struct.pack(
+                "f", obj.replace(tzinfo=datetime.timezone.utc).timestamp()
+            ),
+        )
+    return obj
+
+
 def packMessage(data={}):
     """Pack a data object into a msgpack message."""
-    return msgpack.packb(data, use_bin_type=True)
+    return msgpack.packb(data, default=_customEncoder, use_bin_type=True)
 
 
 def unpackMessage(payload):
@@ -21,7 +40,7 @@ def unpackMessage(payload):
     )
 
 
-def parseRequest():
+def parseRequestData():
     if flask.request.headers.get("content-type", "") != "application/msgpack":
         raise werkzeug.exceptions.HTTPException(
             response=flask.make_response(
@@ -46,6 +65,7 @@ def composeResponse(data):
         and len(payload) >= 256
     ):
         headers["content-encoding"] = "gzip"
+        headers["unencoded-length"] = str(len(payload))
         payload = gzip.compress(payload, 5)
 
     return flask.make_response(payload, 200, headers)
