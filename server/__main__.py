@@ -13,9 +13,16 @@ import click
 import flask
 import flask_mongoengine
 import gevent.pywsgi
+from werkzeug.serving import run_with_reloader
+from werkzeug.debug import DebuggedApplication
 
 # local imports
 import api
+
+
+# No-op function decorator
+def noop(func):
+    return func
 
 
 # Initialize and configure the flask app
@@ -90,13 +97,22 @@ def cli_start(hostName, portNumber):
 
     print(f"Starting web server on http://localhost:{portNumber}")
 
-    if app.config["DEBUG"]:
+    # If debug is enabled, wrap the app in the werkzeug debugger
+    appDebug = app.config["DEBUG"]
+    if appDebug:
         print("Starting in DEBUG mode")
+        app = DebuggedApplication(app.wsgi_app, evalex=True)
+
+    appDecorator = run_with_reloader if appDebug else noop
 
     # Start the server
-    gevent.pywsgi.WSGIServer(
-        listener=(hostName, portNumber), application=app
-    ).serve_forever()
+    @appDecorator
+    def runServer():
+        gevent.pywsgi.WSGIServer(
+            listener=(hostName, portNumber), application=app
+        ).serve_forever()
+
+    runServer()
 
 
 # If main, execute the cli

@@ -27,7 +27,7 @@ print()
 
 print("TESTING JOIN")
 resp = s.get(
-    f"{root}/api/join", data=server.helpers.packMessage({"Testing": 123})
+    f"{root}/api/join", data=server.helpers.packMessage({"code": "ABCD", "name": "Player X"})
 )
 print(resp)
 print(resp.headers)

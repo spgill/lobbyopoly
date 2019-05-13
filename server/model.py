@@ -2,6 +2,16 @@
 import mongoengine as mongo
 
 
+class Player(mongo.Document):
+    """Object representing a single player"""
+
+    meta = {"collection": "players"}
+
+    # Player information
+    name = mongo.StringField()
+    balance = mongo.IntField()
+
+
 class Lobby(mongo.Document):
     """Object representing a single lobby of many players."""
 
@@ -11,15 +21,14 @@ class Lobby(mongo.Document):
     code = mongo.StringField()
     created = mongo.DateTimeField()
     expires = mongo.DateTimeField()
-    logHash = mongo.StringField()
+    eventHash = mongo.StringField()
 
     # Player information
-    players = mongo.ListField(mongo.StringField())
-    playerBalances = mongo.ListField(mongo.IntField())
+    players = mongo.ListField(mongo.ReferenceField(Player))
 
     # Banker information
-    banker = mongo.IntField()
-    bankerBalance = mongo.IntField()
+    banker = mongo.ReferenceField(Player)
+    bank = mongo.IntField()
 
     # Other balances
     freeParking = mongo.IntField()
