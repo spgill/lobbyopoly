@@ -196,7 +196,6 @@ def createBlueprint():
             .exclude("lobby")
             .as_pymongo()
         )
-        # .only("time", "text")
         return helpers.composeResponse(events)
 
     @blueprint.route("/api/poll", methods=["GET"])
