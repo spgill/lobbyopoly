@@ -124,3 +124,13 @@ if "msgpack" in resp.headers.get("content-type"):
     print("UNPACKED", server.helpers.unpackMessage(resp.content))
 
 print()
+
+print("TESTING PREFLIGHT AGAIN")
+resp = s.get(f"{root}/api/preflight")
+print(resp)
+print(resp.headers)
+print(resp.content)
+if "msgpack" in resp.headers.get("content-type"):
+    print("UNPACKED", server.helpers.unpackMessage(resp.content))
+
+print()

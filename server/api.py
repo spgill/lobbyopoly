@@ -60,7 +60,6 @@ def createBlueprint():
 
         Currently just returns whether or not the user is in an active session.
         """
-        lobbyId = None
 
         # If there's a lobby ID stored in the session try looking it up
         if "lobbyId" in flask.session:
@@ -70,16 +69,22 @@ def createBlueprint():
                     id=flask.session["lobbyId"]
                 )
 
-            # If the session doesn't exist, clear the cookie storage
+            # If the lobby doesn't exist, zero out the session
             except mongoengine.DoesNotExist:
                 flask.session["lobbyId"] = None
 
-            # If a session was found, see if it has expired
-            if lobbyDocument.hasExpired():
-                lobbyId = lobbyDocument.code
+            if lobbyDocument:
 
-        # Return all the data in msgpack format
-        return helpers.composeResponse({"lobby": lobbyId})
+                # If the lobby is expired, zero out the session
+                if lobbyDocument.hasExpired():
+                    flask.session["lobbyId"] = None
+
+                # Else, return the player ID
+                else:
+                    return helpers.composeResponse(flask.session["playerId"])
+
+        # Else, just return nothing
+        return helpers.composeResponse(False)
 
     @blueprint.route("/api/join", methods=["POST"])
     def api_join():
