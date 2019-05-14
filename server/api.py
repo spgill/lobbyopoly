@@ -1,6 +1,7 @@
 # stdlib imports
 import datetime
 import hashlib
+import random
 
 # vendor imports
 import flask
@@ -18,6 +19,20 @@ def updateEventHash(lobby, event):
     lobby.eventHash = hasher.hexdigest()
 
 
+playerNameBlacklist = [
+    "player",
+    "themself",
+    "themselves",
+    "the bank",
+    "bank",
+    "banker",
+    "the",
+    "free parking",
+    "free",
+    "parking",
+]
+
+
 transferInserts = {
     "__me__": "themselves",
     "__bank__": "The Bank",
@@ -29,8 +44,12 @@ def playerInsert(playerId):
     return f"PLAYER<{playerId}>"
 
 
-def createBlueprint():
+def randomCode(n=4):
+    # "ACDEFGHKMNPQRTWXY34679"
+    return "".join(random.sample("1234567890", n))
 
+
+def createBlueprint():
     # Create the blueprint
     blueprint = flask.Blueprint("api", __name__)
 
@@ -56,32 +75,71 @@ def createBlueprint():
                 flask.session["lobbyId"] = None
 
             # If a session was found, see if it has expired
-            if (
-                lobbyDocument
-                and lobbyDocument.expires > datetime.datetime.utcnow()
-            ):
+            if lobbyDocument.hasExpired():
                 lobbyId = lobbyDocument.code
 
         # Return all the data in msgpack format
         return helpers.composeResponse({"lobby": lobbyId})
 
     @blueprint.route("/api/join", methods=["POST"])
-    def api_join_code():
+    def api_join():
         """
         API for a user to join a lobby, by its code.
+
+        Alternatively, can create a new lobby.
         """
+        now = datetime.datetime.utcnow()
         data = helpers.parseRequestData()
+        lobbyCode = data.get("code", None)
 
-        # Check the code to make sure that the lobby actually exists
-        try:
-            lobby = model.Lobby.objects.get(code=data.get("code", "????"))
-        except mongoengine.DoesNotExist:
-            return helpers.composeError("Lobby with this code does not exist")
+        # First things first, make sure the player name is not on the list
+        if data["name"].lower() in playerNameBlacklist:
+            return helpers.composeError("That player name is not allowed")
 
-        # It's been found, so let's create the player document
+        # If a code was given,
+        # check the code to make sure that the lobby actually exists
+        if lobbyCode:
+            try:
+                lobby = model.Lobby.objects.get(
+                    code=lobbyCode, expires__gt=now
+                )
+            except mongoengine.DoesNotExist:
+                return helpers.composeError(
+                    "Lobby with this code does not exist"
+                )
+
+        # If no code was given, let's create a new lobby
+        else:
+            # Try generating codes until one is found that is unique among
+            # un-expired lobby sessions
+            while True:
+                lobbyCode = randomCode()
+                try:
+                    model.Lobby.objects.get(code=lobbyCode, expires__gt=now)
+                except mongoengine.DoesNotExist:
+                    break
+
+            # Now that we have a unique code, let's create a new lobby
+            lobby = model.Lobby(
+                code=lobbyCode,
+                created=now,
+                expires=now + datetime.timedelta(hours=24),
+                eventHash=None,
+                players=[],
+                banker=None,
+                bank=15140,
+                freeParking=0,
+            )
+            lobby.save()
+
+        # Double check there's enough room (maximum of 8 players)
+        if len(lobby.players) >= 8:
+            return helpers.composeError("Lobby is full")
+
+        # It's been found (or made), so let's create the player document
         # and attach it to the lobby. Also, subtract the player's starting
         # balance from the bank.
-        player = model.Player(name=data.get("name", "UNKNOWN"), balance=1024)
+        player = model.Player(name=data.get("name", "UNKNOWN"), balance=1500)
         lobby.players.append(player)
         lobby.bank -= player.balance
 
@@ -135,9 +193,10 @@ def createBlueprint():
         events = list(
             model.Event.objects(lobby=lobbyId)
             .order_by("-time")
-            .only("time", "text")
+            .exclude("lobby")
             .as_pymongo()
         )
+        # .only("time", "text")
         return helpers.composeResponse(events)
 
     @blueprint.route("/api/poll", methods=["GET"])
@@ -150,7 +209,9 @@ def createBlueprint():
 
         # Try to locate the lobby in the database
         try:
-            lobby = model.Lobby.objects.get(id=lobbyId)
+            lobby = model.Lobby.objects.get(
+                id=lobbyId, expires__gt=datetime.datetime.utcnow()
+            )
         except mongoengine.DoesNotExist:
             return helpers.composeError("Invalid lobby")
 
@@ -171,13 +232,14 @@ def createBlueprint():
 
         # Try to locate the lobby in the database
         try:
-            lobby = model.Lobby.objects.get(id=lobbyId)
+            lobby = model.Lobby.objects.get(
+                id=lobbyId, expires__gt=datetime.datetime.utcnow()
+            )
         except mongoengine.DoesNotExist:
             return helpers.composeError("Invalid lobby")
 
         # Fetch the player from the lobby document
         player = lobby.players.get(id=flask.session["playerId"])
-        print("PLAYER", player.name, dir(player))
 
         # Parse and extract the data sent by the client
         data = helpers.parseRequestData()
@@ -202,6 +264,9 @@ def createBlueprint():
         else:
             return helpers.composeError("Invalid transfer source")
 
+        if not sufficient:
+            return helpers.composeError("Insufficient funds")
+
         # Now, deduct that amount from the debited party
         if source == "__me__":
             player.balance -= amount
@@ -224,6 +289,10 @@ def createBlueprint():
             except mongoengine.DoesNotExist:
                 return helpers.composeError("Invalid transfer destination")
 
+        print(dir(lobby.players))
+        print(player.id, player.name)
+        print(dir(player))
+
         # Almost there, we just gotta log the transfer
         sourceInsert = transferInserts[source]
         destinationInsert = (
@@ -238,11 +307,156 @@ def createBlueprint():
         )
         event.save()
 
-        # Update the event hash and save all changes
+        # Finally, update the event hash and save all changes
         updateEventHash(lobby, event)
         lobby.save()
 
         # If all is well, just return True
+        return helpers.composeResponse(True)
+
+    @blueprint.route("/api/makeBanker", methods=["POST"])
+    def api_makeBanker():
+        """
+        API method to transfer banker responsibilities from one player to another
+        """
+        # Fetch the lobby id from the session
+        lobbyId = flask.session.get("lobbyId", None)
+        if not lobbyId:
+            return helpers.composeError("Session info error!")
+
+        # Try to locate the lobby in the database
+        try:
+            lobby = model.Lobby.objects.get(
+                id=lobbyId, expires__gt=datetime.datetime.utcnow()
+            )
+        except mongoengine.DoesNotExist:
+            return helpers.composeError("Invalid lobby")
+
+        # Fetch the player from the lobby document
+        player = lobby.players.get(id=flask.session["playerId"])
+
+        # Make sure the current player is the banker
+        if player.id != lobby.banker:
+            return helpers.composeError("You are not the banker")
+
+        # Parse the request data
+        data = helpers.parseRequestData()
+        target = data["target"]
+
+        # Log the transfer of power
+        event = model.Event(
+            lobby=lobby,
+            time=datetime.datetime.utcnow(),
+            text=f"{playerInsert(player.id)} transferred Banker responsibilities to {playerInsert(target)}",
+        )
+        event.save()
+
+        # Change the banker, update the event hash, and save changes
+        lobby.banker = target
+        updateEventHash(lobby, event)
+        lobby.save()
+
+        return helpers.composeResponse(True)
+
+    @blueprint.route("/api/leave", methods=["GET"])
+    def api_leave():
+        """
+        API method for current player to leave lobby
+        """
+        # Fetch the lobby id from the session
+        lobbyId = flask.session.get("lobbyId", None)
+        if not lobbyId:
+            return helpers.composeError("Session info error!")
+
+        # Try to locate the lobby in the database
+        try:
+            lobby = model.Lobby.objects.get(
+                id=lobbyId, expires__gt=datetime.datetime.utcnow()
+            )
+        except mongoengine.DoesNotExist:
+            return helpers.composeError("Invalid lobby")
+
+        # Fetch the player from the lobby document
+        player = lobby.players.get(id=flask.session["playerId"])
+
+        # If the player is the banker, don't allow them to leave
+        if player.id == lobby.banker:
+            return helpers.composeError("You are the banker; you cannot leave")
+
+        # Transfer the player's balance back to the bank
+        lobby.bank += player.balance
+
+        # Remove the player from the player list
+        lobby.players.remove(player)
+
+        # Log the event and save changes
+        event = model.Event(
+            lobby=lobby,
+            time=datetime.datetime.utcnow(),
+            text=f"A player has left; their assets have been returned to the bank",
+        )
+        event.save()
+        updateEventHash(lobby, event)
+        lobby.save()
+
+        return helpers.composeResponse(True)
+
+    @blueprint.route("/api/kick", methods=["POST"])
+    def api_kick():
+        """
+        API method for current player to leave lobby
+        """
+        # Fetch the lobby id from the session
+        lobbyId = flask.session.get("lobbyId", None)
+        if not lobbyId:
+            return helpers.composeError("Session info error!")
+
+        # Try to locate the lobby in the database
+        try:
+            lobby = model.Lobby.objects.get(
+                id=lobbyId, expires__gt=datetime.datetime.utcnow()
+            )
+        except mongoengine.DoesNotExist:
+            return helpers.composeError("Invalid lobby")
+
+        # Fetch the player from the lobby document
+        player = lobby.players.get(id=flask.session["playerId"])
+
+        # Make sure the current player is the banker
+        if player.id != lobby.banker:
+            return helpers.composeError("You are not the banker")
+
+        # Parse the request data and find the target player
+        data = helpers.parseRequestData()
+        try:
+            target = lobby.players.get(id=data["target"])
+        except mongoengine.DoesNotExist:
+            return helpers.composeError("Target player not found")
+
+        # Make sure the target isn't themselves
+        if target.id == player.id:
+            return helpers.composeError("You cannot kick yourself")
+
+        # Make sure the target isn't the banker (shouldn't be a problem)
+        if target.id == lobby.banker:
+            return helpers.composeError("You cannot kick the banker")
+
+        # Transfer the target's balance back to the bank
+        lobby.bank += target.balance
+
+        # Remove the target from the player list
+        lobby.players.remove(target)
+
+        # Log the event and save changes
+        event = model.Event(
+            lobby=lobby,
+            time=datetime.datetime.utcnow(),
+            text=f"A player has been kicked; their assets have been returned to the bank",
+        )
+        event.save()
+        updateEventHash(lobby, event)
+        lobby.save()
+
         return helpers.composeResponse(True)
 
     # Return the finished blueprint
