@@ -179,7 +179,7 @@ def createBlueprint():
 
         # Return the player id to the client, indicating that they are in
         # the lobby and can start the polling process
-        return helpers.composeResponse(str(player.id))
+        return helpers.composeResponse(player.id)
 
     @blueprint.route("/api/events", methods=["GET"])
     def api_events():
