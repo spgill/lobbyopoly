@@ -71,19 +71,30 @@ def createBlueprint():
 
             # If the lobby doesn't exist, zero out the session
             except mongoengine.DoesNotExist:
-                flask.session["lobbyId"] = None
+                flask.session.clear()
+                return helpers.composeResponse(False)
 
             if lobbyDocument:
 
                 # If the lobby is expired, zero out the session
                 if lobbyDocument.hasExpired():
-                    flask.session["lobbyId"] = None
+                    flask.session.clear()
+                    return helpers.composeResponse(False)
+
+                # Make sure the user is actually in the lobby.
+                # If not, zero out the session.
+                try:
+                    lobbyDocument.players.get(
+                        id=flask.session.get("playerId", None)
+                    )
+                except mongoengine.DoesNotExist:
+                    flask.session.clear()
+                    return helpers.composeResponse(False)
 
                 # Else, return the player ID
-                else:
-                    return helpers.composeResponse(flask.session["playerId"])
+                return helpers.composeResponse(flask.session["playerId"])
 
-        # Else, just return nothing
+        # If it gets here, just return nothing
         return helpers.composeResponse(False)
 
     @blueprint.route("/api/join", methods=["POST"])
@@ -222,6 +233,12 @@ def createBlueprint():
         # Check that it hasn't expired
         if lobby.hasExpired():
             return helpers.composeError("Lobby has expired")
+
+        # Double check that the player is still in the game
+        try:
+            lobby.players.get(id=flask.session["playerId"])
+        except mongoengine.DoesNotExist:
+            return helpers.composeError("You are no longer in this lobby")
 
         # Return all the lobby data
         return helpers.composeResponse(lobby.to_mongo().to_dict())
