@@ -49,7 +49,7 @@ def randomCode(n=4):
     return "".join(random.sample("1234567890", n))
 
 
-def createBlueprint():
+def createBlueprint():  # noqa: C901
     # Create the blueprint
     blueprint = flask.Blueprint("api", __name__)
 
