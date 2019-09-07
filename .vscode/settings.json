@@ -1,9 +1,17 @@
 {
   "workbench.colorCustomizations": {
+    "activityBar.background": "#e86c6a",
+    "activityBar.foreground": "#15202b",
+    "activityBar.inactiveForeground": "#15202b99",
+    "activityBarBadge.background": "#75ea77",
+    "activityBarBadge.foreground": "#15202b",
     "titleBar.activeBackground": "#e1403e",
     "titleBar.inactiveBackground": "#e1403e99",
     "titleBar.activeForeground": "#e7e7e7",
-    "titleBar.inactiveForeground": "#e7e7e799"
+    "titleBar.inactiveForeground": "#e7e7e799",
+    "statusBar.background": "#e1403e",
+    "statusBarItem.hoverBackground": "#e86c6a",
+    "statusBar.foreground": "#e7e7e7"
   },
 
   "editor.tabSize": 2,
@@ -14,5 +22,6 @@
 
   "[python]": {
     "editor.tabSize": 4
-  }
+  },
+  "peacock.color": "#e1403e"
 }
