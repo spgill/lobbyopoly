@@ -14,9 +14,9 @@ const PreloaderDot = styled.div`
 `;
 
 const PreloaderDie = styled.div`
-  position: fixed;
-  top: calc(4rem + 8px);
-  left: 8px;
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
   z-index: 1000;
 
   display: grid;
@@ -62,7 +62,7 @@ export default function Preloader() {
   React.useEffect(() => () => clearTimeout(timeoutId), [timeoutId]);
 
   return (
-    <PreloaderDie role="presentation">
+    <PreloaderDie aria-hidden={true}>
       {dotPatterns[dieValue].map((value, i) => (
         <PreloaderDot key={i} show={value} />
       ))}

@@ -41,8 +41,10 @@ const ContentContainer = styled.div`
 `;
 
 const MasterBox = styled(Box)`
+  position: relative;
+
   overflow-x: hidden;
-  overflow-y: scroll;
+  overflow-y: auto;
 
   margin-right: auto;
   margin-left: auto;
@@ -119,15 +121,15 @@ export default function App(props) {
     <ModifiedGrommetBase theme={appTheme}>
       <GlobalStyle />
 
-      {/* Show the dice preloader when the page is loading */}
-      {isPageLoading && <Preloader />}
-
       {/* <AppLayout> */}
       <ToolbarContainer>
         <ToolbarTitle>Lobbyopoly</ToolbarTitle>
       </ToolbarContainer>
 
       <MasterBox pad="large">
+      {/* Show the dice preloader when the page is loading */}
+      {isPageLoading && <Preloader />}
+
         {/* Tab switcher for joining vs creating */}
         <Tabs onActive={setJoinTab}>
           <Tab title="Join a lobby">
