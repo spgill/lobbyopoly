@@ -1,13 +1,6 @@
 import { grommet } from "grommet";
 
-console.warn("DEFAULT THEME", grommet);
-
 export default {
-  button: {
-    border: {
-      radius: "8px",
-    },
-  },
   global: {
     font: {
       family: "'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif",
@@ -23,8 +16,21 @@ export default {
         bold: 700,
       },
     },
+
     colors: {
       brand: "#e1403e",
+    },
+
+    focus: {
+      border: {
+        color: "accent-3",
+      },
+    },
+  },
+
+  button: {
+    border: {
+      radius: "4px",
     },
   },
 };

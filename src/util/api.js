@@ -12,7 +12,7 @@ export async function makeRequest(method, url, data) {
     responseType: "arraybuffer",
     data: msgpack.encode(data),
   });
-  console.error(response.data);
+  // console.error(response.data);
   const decoded = msgpack.decode(Buffer.from(response.data));
 
   return decoded;
