@@ -1,1 +1,1 @@
-web: python server start
+web: python ./server/main.py start
