@@ -18,7 +18,10 @@ export default {
     },
 
     colors: {
-      brand: "#e1403e",
+      brand: "#E53935",
+      brandAlt: "#0D47A1",
+
+      bgDark: "#263238",
     },
 
     focus: {

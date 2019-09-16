@@ -15,6 +15,7 @@ class Player(mongo.EmbeddedDocument):
     id = mongo.ObjectIdField(
         required=True, default=ObjectId, unique=True, primary_key=True
     )
+    active = mongo.BooleanField()
     name = mongo.StringField()
     balance = mongo.IntField()
 

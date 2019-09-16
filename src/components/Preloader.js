@@ -47,7 +47,8 @@ const dotPatterns = [
 
 export default function Preloader() {
   const [dieValue, setDieValue] = React.useState(0);
-  const [timeoutId, setTimeoutId] = React.useState(undefined);
+
+  const timeoutId = React.useRef(undefined);
 
   const incrementValue = React.useCallback(() => {
     setDieValue((dieValue + 1) % 6);
@@ -55,11 +56,11 @@ export default function Preloader() {
 
   // Schedule timeout to change value
   React.useEffect(() => {
-    setTimeoutId(setTimeout(incrementValue, 250));
+    timeoutId.current = setTimeout(incrementValue, 250);
   }, [incrementValue]);
 
   // Special cleanup function to cancel any outstanding timeouts
-  React.useEffect(() => () => clearTimeout(timeoutId), [timeoutId]);
+  React.useEffect(() => () => clearTimeout(timeoutId.current), [timeoutId]);
 
   return (
     <PreloaderDie aria-hidden={true}>

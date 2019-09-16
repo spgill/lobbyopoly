@@ -1,5 +1,6 @@
 # stdlib imports
 import datetime
+import enum
 import hashlib
 import random
 
@@ -9,6 +10,7 @@ import mongoengine
 
 # local imports
 import helpers
+import messages
 import model
 
 
@@ -16,7 +18,7 @@ def updateEventHash(lobby, event):
     initial = lobby.eventHash if lobby.eventHash else "INITIAL"
     hasher = hashlib.blake2b(initial.encode("utf8"))
     hasher.update(event.id.binary)
-    lobby.eventHash = hasher.hexdigest()
+    lobby.eventHash = hasher.hexdigest()[:24]
 
 
 playerNameBlacklist = [
@@ -81,11 +83,11 @@ def createBlueprint():  # noqa: C901
                     flask.session.clear()
                     return helpers.composeResponse(False)
 
-                # Make sure the user is actually in the lobby.
+                # Make sure the user is actually ACTIVE in the lobby.
                 # If not, zero out the session.
                 try:
                     lobbyDocument.players.get(
-                        id=flask.session.get("playerId", None)
+                        id=flask.session.get("playerId", None), active=True
                     )
                 except mongoengine.DoesNotExist:
                     flask.session.clear()
@@ -110,7 +112,7 @@ def createBlueprint():  # noqa: C901
 
         # First things first, make sure the player name is not on the list
         if data["name"].lower() in playerNameBlacklist:
-            return helpers.composeError("That player name is not allowed")
+            return helpers.composeError(messages.ApiError.PLY_NAME_BLACKLIST)
 
         # If a code was given,
         # check the code to make sure that the lobby actually exists
@@ -121,7 +123,7 @@ def createBlueprint():  # noqa: C901
                 )
             except mongoengine.DoesNotExist:
                 return helpers.composeError(
-                    "Lobby with this code does not exist"
+                    messages.ApiError.LOBBY_CODE_INVALID
                 )
 
         # If no code was given, let's create a new lobby
@@ -148,14 +150,17 @@ def createBlueprint():  # noqa: C901
             )
             lobby.save()
 
-        # Double check there's enough room (maximum of 8 players)
-        if len(lobby.players) >= 8:
-            return helpers.composeError("Lobby is full")
+        # Double check there's enough room (maximum of 8 ACTIVE players)
+        activePlayers = filter(lambda ply: ply.active, lobby.players)
+        if len(activePlayers) >= 8:
+            return helpers.composeError(messages.ApiError.LOBBY_FULL)
 
         # It's been found (or made), so let's create the player document
         # and attach it to the lobby. Also, subtract the player's starting
         # balance from the bank.
-        player = model.Player(name=data.get("name", "UNKNOWN"), balance=1500)
+        player = model.Player(
+            active=True, name=data.get("name", "UNKNOWN"), balance=1500
+        )
         lobby.players.append(player)
         lobby.bank -= player.balance
 
@@ -234,9 +239,9 @@ def createBlueprint():  # noqa: C901
         if lobby.hasExpired():
             return helpers.composeError("Lobby has expired")
 
-        # Double check that the player is still in the game
+        # Double check that the player is still ACTIVE in the game
         try:
-            lobby.players.get(id=flask.session["playerId"])
+            lobby.players.get(id=flask.session["playerId"], active=True)
         except mongoengine.DoesNotExist:
             return helpers.composeError("You are no longer in this lobby")
 
@@ -305,7 +310,9 @@ def createBlueprint():  # noqa: C901
             lobby.freeParking += amount
         else:
             try:
-                destinationPlayer = lobby.players.get(id=destination)
+                destinationPlayer = lobby.players.get(
+                    id=destination, active=True
+                )
                 destinationPlayer.balance += amount
             except mongoengine.DoesNotExist:
                 return helpers.composeError("Invalid transfer destination")
@@ -407,8 +414,8 @@ def createBlueprint():  # noqa: C901
         # Transfer the player's balance back to the bank
         lobby.bank += player.balance
 
-        # Remove the player from the player list
-        lobby.players.remove(player)
+        # Mark the player as inactive
+        player.active = False
 
         # Log the event and save changes
         event = model.Event(
@@ -465,8 +472,8 @@ def createBlueprint():  # noqa: C901
         # Transfer the target's balance back to the bank
         lobby.bank += target.balance
 
-        # Remove the target from the player list
-        lobby.players.remove(target)
+        # Mark the target player as inactive
+        target.active = False
 
         # Log the event and save changes
         event = model.Event(
