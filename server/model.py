@@ -5,6 +5,8 @@ import datetime
 from bson.objectid import ObjectId
 import mongoengine as mongo
 
+# local imports
+
 
 class Player(mongo.EmbeddedDocument):
     """Object representing a single player"""
@@ -15,7 +17,6 @@ class Player(mongo.EmbeddedDocument):
     id = mongo.ObjectIdField(
         required=True, default=ObjectId, unique=True, primary_key=True
     )
-    active = mongo.BooleanField()
     name = mongo.StringField()
     balance = mongo.IntField()
 
@@ -54,4 +55,12 @@ class Event(mongo.Document):
     # Contents of the event
     lobby = mongo.LazyReferenceField(Lobby)
     time = mongo.DateTimeField()
-    text = mongo.StringField()
+    key = mongo.StringField()
+    inserts = mongo.ListField(mongo.DynamicField(), default=[])
+
+    def __init__(self, *args, **kwargs):
+
+        # Convert the enum member to its name
+        kwargs["key"] = kwargs["key"].name
+
+        super().__init__(*args, **kwargs)

@@ -71,5 +71,5 @@ def composeResponse(data):
     return flask.make_response(payload, 200, headers)
 
 
-def composeError(message="Server Error"):
-    return composeResponse({"__error__": message})
+def composeError(error):
+    return composeResponse({"__error__": error.name})

@@ -9,7 +9,6 @@ import {
   TextInput,
   ThemeContext,
 } from "grommet";
-import polished from "polished";
 import React from "react";
 import styled, { createGlobalStyle } from "styled-components";
 
@@ -72,10 +71,14 @@ const ErrorText = styled.p`
   color: ${props => props.theme.global.colors["status-error"]};
 `;
 
+function formatEventInsert(el) {
+  return `<span style="color: #91721f;">${el}</span>`;
+}
+
 export default function App(props) {
   // App-wide state vars
   const [isPageLoading, setPageLoading] = React.useState(true);
-  const [isPreflightLoaded, setPreflightLoaded] = React.useState(false);
+  const [preflightData, setPreflightData] = React.useState(false);
   const [playerId, setPlayerId] = React.useState(undefined);
   const [lobbyData, setLobbyData] = React.useState(undefined);
   const [lobbyEvents, setLobbyEvents] = React.useState([]);
@@ -97,10 +100,9 @@ export default function App(props) {
       console.error("Preflight data:", resp);
 
       if (resp) {
-        setPlayerId(resp);
+        setPreflightData(resp);
+        setPlayerId(resp.playerId);
       }
-
-      setPreflightLoaded(true);
       setPageLoading(false);
     })();
   }, []);
@@ -150,8 +152,8 @@ export default function App(props) {
     });
 
     // If there's an error, surface it to the user
-    if (resp.__error__) {
-      setJoinError(resp.__error__);
+    if (resp.__error__ !== undefined) {
+      setJoinError(preflightData.apiErrorMap[resp.__error__]);
     }
 
     // Else, store the user ID
@@ -178,6 +180,45 @@ export default function App(props) {
         return ply;
       }
     }
+  };
+
+  const formatEvent = event => {
+    return preflightData.commonMap[event.key].replace(
+      /\{(\d+)\}/g,
+      (match, group1) => {
+        const idx = parseInt(group1, 10);
+        const insert = event.inserts[idx];
+
+        // Index MAY not exist if server code has changed
+        if (insert !== undefined) {
+          // Arrays are processed as special types
+          if (Array.isArray(insert)) {
+            const [insertKind, insertValue] = insert;
+
+            switch (insertKind) {
+              // Player inserts should lookup and return player name
+              case "player":
+                const ply = getPlayer(insertValue);
+                return formatEventInsert(
+                  ply ? ply.name : "<em>disconnected</em>",
+                );
+
+              // Common inserts should look up the string from the bundle
+              case "common":
+                return formatEventInsert(preflightData.commonMap[insertValue]);
+
+              // Else, just try and jsonify the value
+              default:
+                return JSON.stringify(insertValue);
+            }
+
+            // If it's not an object, just try returning it (it's prolly a string)
+          } else {
+            return formatEventInsert(insert);
+          }
+        }
+      },
+    );
   };
 
   return (
@@ -212,7 +253,7 @@ export default function App(props) {
         {isPageLoading && <Preloader />}
 
         {/* If preflight is loaded, but player is not in a lobby */}
-        {isPreflightLoaded && !playerId && (
+        {preflightData && !playerId && (
           <>
             {/* Tab switcher for joining vs creating */}
             <Tabs onActive={setJoinTab}>
@@ -264,12 +305,12 @@ export default function App(props) {
         )}
 
         {/* Show quick loading screen while waiting on first poll to complete */}
-        {isPreflightLoaded && playerId && !lobbyData && (
+        {preflightData && playerId && !lobbyData && (
           <p style={{ textAlign: "center" }}>Loading...</p>
         )}
 
         {/* If preflight is loaded AND player ID is determined AND lobby data is loaded */}
-        {isPreflightLoaded && playerId && lobbyData && (
+        {preflightData && playerId && lobbyData && (
           <>
             <span>
               Lobby code: <code>{lobbyData.code}</code>
@@ -289,15 +330,12 @@ export default function App(props) {
             <Box>
               <ul>
                 {lobbyEvents.map(event => (
-                  <li key={event._id}>
-                    {event.text.replace(
-                      /PLAYER<([a-z0-9]+)>/,
-                      (match, group1) => {
-                        const ply = getPlayer(group1);
-                        return ply ? ply.name : "DISCONNECTED";
-                      },
-                    )}
-                  </li>
+                  <li
+                    key={event._id}
+                    dangerouslySetInnerHTML={{
+                      __html: formatEvent(event),
+                    }}
+                  />
                 ))}
               </ul>
             </Box>
