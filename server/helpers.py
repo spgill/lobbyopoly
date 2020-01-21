@@ -61,7 +61,7 @@ def composeResponse(data):
 
     # Compress payload in gzip if allowed by client
     if (
-        "gzip" in flask.request.headers["accept-encoding"]
+        "gzip" in flask.request.headers.get("accept-encoding", "")
         and len(payload) >= 256
     ):
         headers["content-encoding"] = "gzip"
