@@ -53,7 +53,7 @@ print("TESTING TRANSFER")
 resp = s.post(
     f"{root}/api/transfer",
     data=server.helpers.packMessage(
-        {"source": "__me__", "destination": "__freeParking__", "amount": 10}
+        {"source": "__self__", "destination": "__fp__", "amount": 10}
     ),
 )
 print(resp)
@@ -68,7 +68,7 @@ print("TESTING BANK TRANSFER")
 resp = s.post(
     f"{root}/api/transfer",
     data=server.helpers.packMessage(
-        {"source": "__bank__", "destination": "__me__", "amount": 10}
+        {"source": "__bank__", "destination": "__self__", "amount": 10}
     ),
 )
 print(resp)
@@ -83,7 +83,7 @@ print("TESTING ILLICIT TRANSFER")
 resp = s.post(
     f"{root}/api/transfer",
     data=server.helpers.packMessage(
-        {"source": "__me__", "destination": "__bank__", "amount": 1000000}
+        {"source": "__self__", "destination": "__bank__", "amount": 1000000}
     ),
 )
 print(resp)
