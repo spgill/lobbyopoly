@@ -1,22 +1,15 @@
 // Vendor imports
-import {
-  Grommet,
-  Box,
-  Button,
-  Menu,
-  Tabs,
-  Tab,
-  TextInput,
-  ThemeContext,
-} from "grommet";
+import { Grommet, Box, Button, Menu, TextInput, ThemeContext } from "grommet";
 import React from "react";
 import styled, { createGlobalStyle } from "styled-components";
 
 // Local imports
+import BulletedInstruction from "./BulletedInstruction";
 import Preloader from "../components/Preloader";
 import { ToolbarContainer, ToolbarTitle } from "../components/Toolbar";
 import appTheme from "../config/theme";
 import * as api from "../util/api";
+import * as enumutil from "../util/enum";
 import { useInterval } from "../util/interval";
 
 const ModifiedGrommetBase = styled(Grommet)`
@@ -75,6 +68,12 @@ function formatEventInsert(el) {
   return `<span style="color: #91721f;">${el}</span>`;
 }
 
+const LobbyJoinMode = enumutil.createEnum({
+  NONE: enumutil.auto(),
+  JOIN: enumutil.auto(),
+  CREATE: enumutil.auto(),
+});
+
 export default function App(props) {
   // App-wide state vars
   const [isPageLoading, setPageLoading] = React.useState(true);
@@ -84,6 +83,7 @@ export default function App(props) {
   const [lobbyEvents, setLobbyEvents] = React.useState([]);
 
   // Lobby join state vars
+  const [joinMode, setJoinMode] = React.useState(LobbyJoinMode.NONE);
   const [joinTab, setJoinTab] = React.useState(0);
   const [joinCode, setJoinCode] = React.useState("");
   const [joinName, setJoinName] = React.useState("");
@@ -99,9 +99,9 @@ export default function App(props) {
 
       console.error("Preflight data:", resp);
 
-      if (resp) {
-        setPreflightData(resp);
-        setPlayerId(resp.playerId);
+      if (resp.payload) {
+        setPreflightData(resp.payload);
+        setPlayerId(resp.payload.playerId);
       }
       setPageLoading(false);
     })();
@@ -114,8 +114,8 @@ export default function App(props) {
       const pollData = await api.makeRequest("get", "/api/poll");
 
       // If there's no error, update the lobby data
-      if (!pollData.__error__) {
-        setLobbyData(pollData);
+      if (!pollData.error) {
+        setLobbyData(pollData.payload);
       }
     } else if (lobbyData) {
       setLobbyData(undefined);
@@ -128,8 +128,8 @@ export default function App(props) {
       if (lobbyData && lobbyData.eventHash !== eventHash.current) {
         const events = await api.makeRequest("get", "/api/events");
 
-        setLobbyEvents(events);
-        console.warn("EVENTS", events);
+        setLobbyEvents(events.payload);
+        console.warn("EVENTS", events.payload);
 
         // Update the ref'd event hash
         eventHash.current = lobbyData.eventHash;
@@ -152,13 +152,13 @@ export default function App(props) {
     });
 
     // If there's an error, surface it to the user
-    if (resp.__error__ !== undefined) {
-      setJoinError(preflightData.apiErrorMap[resp.__error__]);
+    if (resp.error) {
+      setJoinError(preflightData.apiErrorMap[resp.error]);
     }
 
     // Else, store the user ID
     else {
-      setPlayerId(resp);
+      setPlayerId(resp.payload);
     }
 
     setPageLoading(false);
@@ -255,13 +255,40 @@ export default function App(props) {
         {/* If preflight is loaded, but player is not in a lobby */}
         {preflightData && !playerId && (
           <>
-            {/* Tab switcher for joining vs creating */}
-            <Tabs onActive={setJoinTab}>
-              <Tab title="Join a lobby">
-                <p>
+            {/* Content switcher for joining vs creating */}
+            <BulletedInstruction n="1">
+              What do you want to do?
+            </BulletedInstruction>
+
+            <VerticalSpacer factor={1} />
+
+            <Button
+              label="Join a lobby"
+              active={joinMode === LobbyJoinMode.JOIN}
+              onClick={() => setJoinMode(LobbyJoinMode.JOIN)}
+            />
+            <VerticalSpacer factor={0.382} />
+            <Button
+              label="Create a new lobby"
+              active={joinMode === LobbyJoinMode.CREATE}
+              onClick={() => setJoinMode(LobbyJoinMode.CREATE)}
+            />
+
+            {joinMode !== LobbyJoinMode.NONE && (
+              <>
+                <VerticalSpacer factor={1} />
+                <hr style={{ margin: "0" }} />
+                <VerticalSpacer factor={1} />
+              </>
+            )}
+
+            {joinMode === LobbyJoinMode.JOIN && (
+              <>
+                <BulletedInstruction n="2">
                   To join a lobby, just enter the lobby code below, enter your
                   name, and press the button.
-                </p>
+                </BulletedInstruction>
+                <VerticalSpacer factor={1} />
                 <TextInput
                   placeholder="Lobby code"
                   value={joinCode}
@@ -276,16 +303,21 @@ export default function App(props) {
                 />
                 <VerticalSpacer />
                 <Button
+                  primary={true}
                   label="Join Lobby"
                   onClick={handleClickJoinLobby}
                   disabled={!(joinCode && joinName)}
                 />
-              </Tab>
-              <Tab title="Create a lobby">
-                <p>
+              </>
+            )}
+
+            {joinMode === LobbyJoinMode.CREATE && (
+              <>
+                <BulletedInstruction n="2">
                   To create a lobby, just enter your name below and press the
                   button.
-                </p>
+                </BulletedInstruction>
+                <VerticalSpacer factor={1} />
                 <TextInput
                   placeholder="Your name"
                   value={joinName}
@@ -293,12 +325,13 @@ export default function App(props) {
                 />
                 <VerticalSpacer />
                 <Button
+                  primary={true}
                   label="Create Lobby"
                   onClick={handleClickJoinLobby}
                   disabled={!joinName}
                 />
-              </Tab>
-            </Tabs>
+              </>
+            )}
 
             {joinError && <ErrorText>{joinError}</ErrorText>}
           </>
