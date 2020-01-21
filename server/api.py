@@ -362,7 +362,8 @@ def createBlueprint():  # noqa: C901
             key=strings.Common.EVENT_TRANSFER,
             inserts=[
                 playerInsert(player.id),
-                f"${amount}".sourceInsert,
+                f"${amount}",
+                sourceInsert,
                 destinationInsert,
             ],
         )
