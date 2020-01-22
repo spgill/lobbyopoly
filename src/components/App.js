@@ -112,8 +112,15 @@ export default function App(props) {
     if (playerId) {
       const pollData = await api.makeRequest("get", "/api/poll");
 
+      // If there is an error, that likely means that the lobby is gone
+      // or that the player has been kicked. So go back to the home page.
+      if (pollData.error) {
+        setLobbyData(undefined);
+        setPlayerId(undefined);
+      }
+
       // If there's no error, update the lobby data
-      if (!pollData.error) {
+      else {
         setLobbyData(pollData.payload);
       }
     } else if (lobbyData) {
