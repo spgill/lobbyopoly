@@ -96,7 +96,7 @@ export default function App(props) {
     (async function() {
       const resp = await api.makeRequest("get", "/api/preflight");
 
-      console.error("Preflight data:", resp);
+      console.log("Preflight data:", resp);
 
       if (resp.payload) {
         setPreflightData(resp.payload);
@@ -135,7 +135,7 @@ export default function App(props) {
         const events = await api.makeRequest("get", "/api/events");
 
         setLobbyEvents(events.payload);
-        console.warn("EVENTS", events.payload);
+        console.log("EVENTS", events.payload);
 
         // Update the ref'd event hash
         eventHash.current = lobbyData.eventHash;
