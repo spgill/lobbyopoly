@@ -40,6 +40,7 @@ class TransferEntity(enum.Enum):
     BANK = "__bank__"
     FP = "__fp__"
 
+
 transferEntityMap = {mem.name: mem.value for mem in TransferEntity}
 
 
@@ -104,8 +105,8 @@ def createBlueprint():  # noqa: C901
 
             if lobbyDocument:
 
-                # If the lobby is expired, zero out the session
-                if lobbyDocument.hasExpired():
+                # If the lobby is expired or disbanded, zero out the session
+                if lobbyDocument.disbanded or lobbyDocument.hasExpired():
                     flask.session.clear()
 
                 # Else, make sure the user is actually in the lobby.
@@ -169,6 +170,7 @@ def createBlueprint():  # noqa: C901
                 created=now,
                 expires=now + datetime.timedelta(hours=24),
                 eventHash=None,
+                disbanded=False,
                 players=[],
                 banker=None,
                 bank=15140,
@@ -261,8 +263,8 @@ def createBlueprint():  # noqa: C901
         except mongoengine.DoesNotExist:
             return helpers.composeError(strings.ApiError.LOBBY_INVALID)
 
-        # Check that it hasn't expired
-        if lobby.hasExpired():
+        # Check that it hasn't expired or been disbanded
+        if lobby.disbanded or lobby.hasExpired():
             return helpers.composeError(strings.ApiError.LOBBY_EXPIRED)
 
         # Double check that the player is still in the game
@@ -462,7 +464,53 @@ def createBlueprint():  # noqa: C901
         updateEventHash(lobby, event)
         lobby.save()
 
+        # Finally, zero out the player's session
+        flask.session.clear()
+
         return helpers.composeResponse(True)
+
+    @blueprint.route("/api/disband", methods=["GET"])
+    def api_disband():
+        """
+        API method for the banker to disband the lobby
+        """
+        # Fetch the lobby id from the session
+        lobbyId = flask.session.get("lobbyId", None)
+        if not lobbyId:
+            return helpers.composeError(strings.ApiError.SESSION_INVALID)
+
+        # Try to locate the lobby in the database
+        try:
+            lobby = model.Lobby.objects.get(
+                id=lobbyId, expires__gt=datetime.datetime.utcnow()
+            )
+        except mongoengine.DoesNotExist:
+            return helpers.composeError(strings.ApiError.LOBBY_INVALID)
+
+        # Fetch the player from the lobby document
+        player = lobby.players.get(id=flask.session["playerId"])
+
+        # If the player is not the banker, return permission error
+        if player.id != lobby.banker:
+            return helpers.composeError(strings.ApiError.NO_PERMISSION)
+
+        # Mark the lobby as disbanded
+        lobby.disbanded = True
+
+        # Log the event
+        event = model.Event(
+            lobby=lobby,
+            time=datetime.datetime.utcnow(),
+            key=strings.Common.EVENT_DISBANDED,
+        )
+        event.save()
+
+        # Update the event hash and save lobby changes
+        updateEventHash(lobby, event)
+        lobby.save()
+
+        # Return empty response
+        return helpers.composeResponse()
 
     @blueprint.route("/api/kick", methods=["POST"])
     def api_kick():

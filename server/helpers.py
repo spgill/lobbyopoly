@@ -54,7 +54,7 @@ def parseRequestData():
 defaultHeaders = {"content-type": "application/msgpack"}
 
 
-def composeResponse(data, error=None):
+def composeResponse(data=None, error=None):
     payload = packMessage({"error": error, "payload": data})
     headers = {}
     headers.update(defaultHeaders)

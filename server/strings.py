@@ -4,6 +4,7 @@ import enum
 
 # Simple string messages for errors returned by the api
 class ApiError(enum.Enum):
+    NO_PERMISSION = "You do not have permission to do this"
     BANKER_CANNOT_LEAVE = "You are the banker. You cannot leave."
     KICK_NOT_FOUND = "Target player not found"
     KICK_YOURSELF = "You cannot kick yourself"
@@ -42,6 +43,7 @@ class Common(enum.Enum):
         "A player has been kicked. Their cash has been returned to the bank."
     )
     EVENT_TRANSFER = "{0} transferred {1} from {2} to {3}."
+    EVENT_DISBANDED = "The lobby has been disbanded."
 
     # Transfer inserts
     TRANSFER_SELF = "themself"

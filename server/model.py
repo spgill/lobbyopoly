@@ -31,6 +31,7 @@ class Lobby(mongo.Document):
     created = mongo.DateTimeField()
     expires = mongo.DateTimeField()
     eventHash = mongo.StringField()
+    disbanded = mongo.BooleanField()
 
     # Player information
     players = mongo.EmbeddedDocumentListField(Player)
