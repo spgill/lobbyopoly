@@ -4,7 +4,6 @@ import enum
 
 # Simple string messages for errors returned by the api
 class ApiError(enum.Enum):
-    NO_PERMISSION = "You do not have permission to do this"
     BANKER_CANNOT_LEAVE = "You are the banker. You cannot leave."
     KICK_NOT_FOUND = "Target player not found"
     KICK_YOURSELF = "You cannot kick yourself"

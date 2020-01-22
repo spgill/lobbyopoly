@@ -84,7 +84,6 @@ export default function App(props) {
 
   // Lobby join state vars
   const [joinMode, setJoinMode] = React.useState(LobbyJoinMode.NONE);
-  const [joinTab, setJoinTab] = React.useState(0);
   const [joinCode, setJoinCode] = React.useState("");
   const [joinName, setJoinName] = React.useState("");
   const [joinError, setJoinError] = React.useState(undefined);
@@ -147,7 +146,7 @@ export default function App(props) {
 
     // Hit the API to join/create lobby
     const resp = await api.makeRequest("post", "/api/join", {
-      code: joinTab === 0 ? joinCode : undefined,
+      code: joinMode === LobbyJoinMode.JOIN ? joinCode : undefined,
       name: joinName,
     });
 
@@ -164,14 +163,28 @@ export default function App(props) {
     setPageLoading(false);
   };
 
-  // When use clicks log out button
+  // When user clicks log out button
   const handleClickLeave = async () => {
     // Fire off request to API endpoint to remove the user from the lobby
-    await api.makeRequest("get", "/api/leave");
+    const resp = await api.makeRequest("get", "/api/leave");
 
     // Now clear all the state var to reset back to the welcome form
-    setLobbyData(undefined);
-    setPlayerId(undefined);
+    if (!resp.error) {
+      setLobbyData(undefined);
+      setPlayerId(undefined);
+    }
+  };
+
+  // When banker clicks disband button
+  const handleClickDisband = async () => {
+    // Fire off request to API endpoint to remove the user from the lobby
+    const resp = await api.makeRequest("get", "/api/disband");
+
+    // Now clear all the state var to reset back to the welcome form
+    if (!resp.error) {
+      setLobbyData(undefined);
+      setPlayerId(undefined);
+    }
   };
 
   const getPlayer = id => {
@@ -243,7 +256,14 @@ export default function App(props) {
           <Menu
             style={{ marginLeft: "auto" }}
             label="Actions"
-            items={[{ label: "Leave Lobby", onClick: handleClickLeave }]}
+            items={[
+              { label: "Leave Lobby", onClick: handleClickLeave },
+              lobbyData &&
+                lobbyData.banker === playerId && {
+                  label: "Disband Lobby",
+                  onClick: handleClickDisband,
+                },
+            ].filter(Boolean)}
           />
         </ThemeContext.Extend>
       </ToolbarContainer>

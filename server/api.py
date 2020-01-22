@@ -21,6 +21,29 @@ def updateEventHash(lobby, event):
     lobby.eventHash = hasher.hexdigest()[:24]
 
 
+def verifySessionLobby():
+    # Fetch the lobby id from the session
+    lobbyId = flask.session.get("lobbyId", None)
+    if not lobbyId:
+        return (strings.ApiError.SESSION_INVALID, None, None)
+
+    # Try to locate the lobby in the database
+    try:
+        lobby = model.Lobby.objects.get(
+            id=lobbyId, expires__gt=datetime.datetime.utcnow(), disbanded=False
+        )
+    except mongoengine.DoesNotExist:
+        return (strings.ApiError.LOBBY_INVALID, None, None)
+
+    # Fetch the player from the lobby document
+    try:
+        player = lobby.players.get(id=flask.session["playerId"])
+    except mongoengine.DoesNotExist:
+        return (strings.ApiError.PLY_NOT_ACTIVE, None, None)
+
+    return (None, lobby, player)
+
+
 playerNameBlacklist = [
     "player",
     "themself",
@@ -91,37 +114,12 @@ def createBlueprint():  # noqa: C901
             "playerId": None,
         }
 
-        # If there's a lobby ID stored in the session try looking it up
-        if "lobbyId" in flask.session:
-            lobbyDocument = None
-            try:
-                lobbyDocument = model.Lobby.objects.get(
-                    id=flask.session["lobbyId"]
-                )
-
-            # If the lobby doesn't exist, zero out the session
-            except mongoengine.DoesNotExist:
-                flask.session.clear()
-
-            if lobbyDocument:
-
-                # If the lobby is expired or disbanded, zero out the session
-                if lobbyDocument.disbanded or lobbyDocument.hasExpired():
-                    flask.session.clear()
-
-                # Else, make sure the user is actually in the lobby.
-                else:
-                    try:
-                        lobbyDocument.players.get(
-                            id=flask.session.get("playerId", None)
-                        )
-
-                        # If all is good, just return the player's ID
-                        data["playerId"] = flask.session["playerId"]
-
-                    # If not, zero out the session
-                    except mongoengine.DoesNotExist:
-                        flask.session.clear()
+        # Verify session info, and if there are errors, wipe the session
+        (error, lobby, player) = verifySessionLobby()
+        if error:
+            flask.session.clear()
+        else:
+            data["playerId"] = flask.session["playerId"]
 
         # If it gets here, just return nothing
         return helpers.composeResponse(data)
@@ -156,11 +154,13 @@ def createBlueprint():  # noqa: C901
         # If no code was given, let's create a new lobby
         else:
             # Try generating codes until one is found that is unique among
-            # un-expired lobby sessions
+            # un-expired and non-disbanded lobby sessions
             while True:
                 lobbyCode = randomCode()
                 try:
-                    model.Lobby.objects.get(code=lobbyCode, expires__gt=now)
+                    model.Lobby.objects.get(
+                        code=lobbyCode, expires__gt=now, disbanded=False
+                    )
                 except mongoengine.DoesNotExist:
                     break
 
@@ -250,28 +250,10 @@ def createBlueprint():  # noqa: C901
     @blueprint.route("/api/poll", methods=["GET"])
     def api_poll():
         """API method to poll the lobby for concise info."""
-        # Fetch the lobby id from the session
-        lobbyId = flask.session.get("lobbyId", None)
-        if not lobbyId:
-            return helpers.composeError(strings.ApiError.SESSION_INVALID)
-
-        # Try to locate the lobby in the database
-        try:
-            lobby = model.Lobby.objects.get(
-                id=lobbyId, expires__gt=datetime.datetime.utcnow()
-            )
-        except mongoengine.DoesNotExist:
-            return helpers.composeError(strings.ApiError.LOBBY_INVALID)
-
-        # Check that it hasn't expired or been disbanded
-        if lobby.disbanded or lobby.hasExpired():
-            return helpers.composeError(strings.ApiError.LOBBY_EXPIRED)
-
-        # Double check that the player is still in the game
-        try:
-            lobby.players.get(id=flask.session["playerId"])
-        except mongoengine.DoesNotExist:
-            return helpers.composeError(strings.ApiError.PLY_NOT_ACTIVE)
+        # Verify that the lobby and player are valid. Return any errors
+        (error, lobby, player) = verifySessionLobby()
+        if error:
+            return helpers.composeError(error)
 
         # Return all the lobby data
         return helpers.composeResponse(lobby.to_mongo().to_dict())
@@ -279,21 +261,10 @@ def createBlueprint():  # noqa: C901
     @blueprint.route("/api/transfer", methods=["POST"])
     def api_transfer():
         """API method to transfer funds from one account to another."""
-        # Fetch the lobby id from the session
-        lobbyId = flask.session.get("lobbyId", None)
-        if not lobbyId:
-            return helpers.composeError(strings.ApiError.SESSION_INVALID)
-
-        # Try to locate the lobby in the database
-        try:
-            lobby = model.Lobby.objects.get(
-                id=lobbyId, expires__gt=datetime.datetime.utcnow()
-            )
-        except mongoengine.DoesNotExist:
-            return helpers.composeError(strings.ApiError.LOBBY_INVALID)
-
-        # Fetch the player from the lobby document
-        player = lobby.players.get(id=flask.session["playerId"])
+        # Verify that the lobby and player are valid. Return any errors
+        (error, lobby, player) = verifySessionLobby()
+        if error:
+            return helpers.composeError(error)
 
         # Parse and extract the data sent by the client
         data = helpers.parseRequestData()
@@ -383,21 +354,10 @@ def createBlueprint():  # noqa: C901
         """
         API method to transfer banker responsibilities from one player to another
         """
-        # Fetch the lobby id from the session
-        lobbyId = flask.session.get("lobbyId", None)
-        if not lobbyId:
-            return helpers.composeError(strings.ApiError.SESSION_INVALID)
-
-        # Try to locate the lobby in the database
-        try:
-            lobby = model.Lobby.objects.get(
-                id=lobbyId, expires__gt=datetime.datetime.utcnow()
-            )
-        except mongoengine.DoesNotExist:
-            return helpers.composeError(strings.ApiError.LOBBY_INVALID)
-
-        # Fetch the player from the lobby document
-        player = lobby.players.get(id=flask.session["playerId"])
+        # Verify that the lobby and player are valid. Return any errors
+        (error, lobby, player) = verifySessionLobby()
+        if error:
+            return helpers.composeError(error)
 
         # Make sure the current player is the banker
         if player.id != lobby.banker:
@@ -428,21 +388,10 @@ def createBlueprint():  # noqa: C901
         """
         API method for current player to leave lobby
         """
-        # Fetch the lobby id from the session
-        lobbyId = flask.session.get("lobbyId", None)
-        if not lobbyId:
-            return helpers.composeError(strings.ApiError.SESSION_INVALID)
-
-        # Try to locate the lobby in the database
-        try:
-            lobby = model.Lobby.objects.get(
-                id=lobbyId, expires__gt=datetime.datetime.utcnow()
-            )
-        except mongoengine.DoesNotExist:
-            return helpers.composeError(strings.ApiError.LOBBY_INVALID)
-
-        # Fetch the player from the lobby document
-        player = lobby.players.get(id=flask.session["playerId"])
+        # Verify that the lobby and player are valid. Return any errors
+        (error, lobby, player) = verifySessionLobby()
+        if error:
+            return helpers.composeError(error)
 
         # If the player is the banker, don't allow them to leave
         if player.id == lobby.banker:
@@ -474,25 +423,14 @@ def createBlueprint():  # noqa: C901
         """
         API method for the banker to disband the lobby
         """
-        # Fetch the lobby id from the session
-        lobbyId = flask.session.get("lobbyId", None)
-        if not lobbyId:
-            return helpers.composeError(strings.ApiError.SESSION_INVALID)
-
-        # Try to locate the lobby in the database
-        try:
-            lobby = model.Lobby.objects.get(
-                id=lobbyId, expires__gt=datetime.datetime.utcnow()
-            )
-        except mongoengine.DoesNotExist:
-            return helpers.composeError(strings.ApiError.LOBBY_INVALID)
-
-        # Fetch the player from the lobby document
-        player = lobby.players.get(id=flask.session["playerId"])
+        # Verify that the lobby and player are valid. Return any errors
+        (error, lobby, player) = verifySessionLobby()
+        if error:
+            return helpers.composeError(error)
 
         # If the player is not the banker, return permission error
         if player.id != lobby.banker:
-            return helpers.composeError(strings.ApiError.NO_PERMISSION)
+            return helpers.composeError(strings.ApiError.PLY_NOT_BANKER)
 
         # Mark the lobby as disbanded
         lobby.disbanded = True
@@ -517,21 +455,10 @@ def createBlueprint():  # noqa: C901
         """
         API method for current player to leave lobby
         """
-        # Fetch the lobby id from the session
-        lobbyId = flask.session.get("lobbyId", None)
-        if not lobbyId:
-            return helpers.composeError(strings.ApiError.SESSION_INVALID)
-
-        # Try to locate the lobby in the database
-        try:
-            lobby = model.Lobby.objects.get(
-                id=lobbyId, expires__gt=datetime.datetime.utcnow()
-            )
-        except mongoengine.DoesNotExist:
-            return helpers.composeError(strings.ApiError.LOBBY_INVALID)
-
-        # Fetch the player from the lobby document
-        player = lobby.players.get(id=flask.session["playerId"])
+        # Verify that the lobby and player are valid. Return any errors
+        (error, lobby, player) = verifySessionLobby()
+        if error:
+            return helpers.composeError(error)
 
         # Make sure the current player is the banker
         if player.id != lobby.banker:
