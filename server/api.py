@@ -1,6 +1,5 @@
 # stdlib imports
 import datetime
-import enum
 import hashlib
 import random
 
@@ -25,7 +24,7 @@ def verifySessionLobby():
     # Fetch the lobby id from the session
     lobbyId = flask.session.get("lobbyId", None)
     if not lobbyId:
-        return (strings.ApiError.SESSION_INVALID, None, None)
+        return (strings.Bundle.ERROR_SESSION_INVALID, None, None)
 
     # Try to locate the lobby in the database
     try:
@@ -33,56 +32,33 @@ def verifySessionLobby():
             id=lobbyId, expires__gt=datetime.datetime.utcnow(), disbanded=False
         )
     except mongoengine.DoesNotExist:
-        return (strings.ApiError.LOBBY_INVALID, None, None)
+        return (strings.Bundle.ERROR_LOBBY_INVALID, None, None)
 
     # Fetch the player from the lobby document
     try:
         player = lobby.players.get(id=flask.session["playerId"])
     except mongoengine.DoesNotExist:
-        return (strings.ApiError.PLY_NOT_ACTIVE, None, None)
+        return (strings.Bundle.ERROR_PLY_NOT_ACTIVE, None, None)
 
     return (None, lobby, player)
 
 
-playerNameBlacklist = [
-    "player",
-    "themself",
-    "themselves",
-    "the bank",
-    "bank",
-    "banker",
-    "the",
-    "free parking",
-    "free",
-    "parking",
-]
-
-
-class TransferEntity(enum.Enum):
-    SELF = "__self__"
-    BANK = "__bank__"
-    FP = "__fp__"
-
-
-transferEntityMap = {mem.name: mem.value for mem in TransferEntity}
-
-
 transferEntityStrings = {
-    TransferEntity.SELF: strings.Common.TRANSFER_SELF,
-    TransferEntity.BANK: strings.Common.TRANSFER_BANK,
-    TransferEntity.FP: strings.Common.TRANSFER_FP,
+    strings.TransferEntity.SELF: strings.Bundle.TRANSFER_SELF,
+    strings.TransferEntity.BANK: strings.Bundle.TRANSFER_BANK,
+    strings.TransferEntity.FP: strings.Bundle.TRANSFER_FP,
 }
 
 
 def decodeTransferEntity(entity):
     try:
-        return TransferEntity(entity)
+        return strings.TransferEntity(entity)
     except ValueError:
         return entity
 
 
-def commonInsert(member):
-    return ["common", member.name]
+def bundleInsert(member):
+    return ["bundle", member.name]
 
 
 def playerInsert(playerId):
@@ -108,9 +84,8 @@ def createBlueprint():  # noqa: C901
 
         # Create the basic data structure to return
         data = {
-            "apiErrorMap": strings.apiErrorMap,
-            "commonMap": strings.commonMap,
-            "transferEntityMap": transferEntityMap,
+            "bundleMap": strings.bundleMap,
+            "transferEntityMap": strings.transferEntityMap,
             "playerId": None,
         }
 
@@ -136,8 +111,10 @@ def createBlueprint():  # noqa: C901
         lobbyCode = data.get("code", None)
 
         # First things first, make sure the player name is not on the list
-        if data["name"].lower() in playerNameBlacklist:
-            return helpers.composeError(strings.ApiError.PLY_NAME_BLACKLIST)
+        if data["name"].lower() in strings.playerNameBlacklist:
+            return helpers.composeError(
+                strings.Bundle.ERROR_PLY_NAME_BLACKLIST
+            )
 
         # If a code was given,
         # check the code to make sure that the lobby actually exists
@@ -148,7 +125,7 @@ def createBlueprint():  # noqa: C901
                 )
             except mongoengine.DoesNotExist:
                 return helpers.composeError(
-                    strings.ApiError.LOBBY_CODE_INVALID
+                    strings.Bundle.ERROR_LOBBY_CODE_INVALID
                 )
 
         # If no code was given, let's create a new lobby
@@ -180,7 +157,7 @@ def createBlueprint():  # noqa: C901
 
         # Double check there's enough room (maximum of 8 players)
         if len(lobby.players) >= 8:
-            return helpers.composeError(strings.ApiError.LOBBY_FULL)
+            return helpers.composeError(strings.Bundle.ERROR_LOBBY_FULL)
 
         # It's been found (or made), so let's create the player document
         # and attach it to the lobby. Also, subtract the player's starting
@@ -193,7 +170,7 @@ def createBlueprint():  # noqa: C901
         joinEvent = model.Event(
             lobby=lobby,
             time=datetime.datetime.utcnow(),
-            key=strings.Common.EVENT_PLY_JOIN,
+            key=strings.Bundle.EVENT_PLY_JOIN,
             inserts=[playerInsert(player.id)],
         )
         joinEvent.save()
@@ -204,7 +181,7 @@ def createBlueprint():  # noqa: C901
             bankerEvent = model.Event(
                 lobby=lobby,
                 time=datetime.datetime.utcnow(),
-                key=strings.Common.EVENT_PLY_MADE_BANKER,
+                key=strings.Bundle.EVENT_PLY_MADE_BANKER,
                 inserts=[playerInsert(player.id)],
             )
             bankerEvent.save()
@@ -213,7 +190,7 @@ def createBlueprint():  # noqa: C901
         transferEvent = model.Event(
             lobby=lobby,
             time=datetime.datetime.utcnow(),
-            key=strings.Common.EVENT_BANK_TRANSFER_START,
+            key=strings.Bundle.EVENT_BANK_TRANSFER_START,
             inserts=[f"${player.balance}", playerInsert(player.id)],
         )
         transferEvent.save()
@@ -275,37 +252,42 @@ def createBlueprint():  # noqa: C901
         # First, make sure that the player has permission
         # If the source is anything besides the current player, then the
         # current player must be the banker.
-        if source is not TransferEntity.SELF and player.id != lobby.banker:
-            return helpers.composeError(strings.ApiError.PLY_NOT_BANKER)
+        if (
+            source is not strings.TransferEntity.SELF
+            and player.id != lobby.banker
+        ):
+            return helpers.composeError(strings.Bundle.ERROR_PLY_NOT_BANKER)
 
         # First, make sure the debited party has enough funds
         sufficient = None
-        if source is TransferEntity.SELF:
+        if source is strings.TransferEntity.SELF:
             sufficient = player.balance >= amount
-        elif source is TransferEntity.BANK:
+        elif source is strings.TransferEntity.BANK:
             sufficient = lobby.bank >= amount
-        elif source is TransferEntity.FP:
+        elif source is strings.TransferEntity.FP:
             sufficient = lobby.freeParking >= amount
         else:
-            return helpers.composeError(strings.ApiError.TRANSFER_INVALID_SRC)
+            return helpers.composeError(
+                strings.Bundle.ERROR_TRANSFER_INVALID_SRC
+            )
 
         if not sufficient:
-            return helpers.composeError(strings.ApiError.TRANSFER_FUNDS)
+            return helpers.composeError(strings.Bundle.ERROR_TRANSFER_FUNDS)
 
         # Now, deduct that amount from the debited party
-        if source is TransferEntity.SELF:
+        if source is strings.TransferEntity.SELF:
             player.balance -= amount
-        elif source is TransferEntity.BANK:
+        elif source is strings.TransferEntity.BANK:
             lobby.bank -= amount
-        elif source is TransferEntity.FP:
+        elif source is strings.TransferEntity.FP:
             lobby.freeParking -= amount
 
         # Next, add the amount to the credited party
-        if destination is TransferEntity.SELF:
+        if destination is strings.TransferEntity.SELF:
             player.balance += amount
-        elif destination is TransferEntity.BANK:
+        elif destination is strings.TransferEntity.BANK:
             lobby.bank += amount
-        elif destination is TransferEntity.FP:
+        elif destination is strings.TransferEntity.FP:
             lobby.freeParking += amount
         else:
             try:
@@ -313,18 +295,18 @@ def createBlueprint():  # noqa: C901
                 destinationPlayer.balance += amount
             except mongoengine.DoesNotExist:
                 return helpers.composeError(
-                    strings.ApiError.TRANSFER_INVALID_DEST
+                    strings.Bundle.ERROR_TRANSFER_INVALID_DEST
                 )
 
         print(dir(lobby.players))
         print(player.id, player.name)
         print(dir(player))
 
-        sourceInsert = commonInsert(transferEntityStrings[source])
+        sourceInsert = bundleInsert(transferEntityStrings[source])
 
         destinationInsert = (
-            commonInsert(transferEntityStrings[destination])
-            if isinstance(destination, TransferEntity)
+            bundleInsert(transferEntityStrings[destination])
+            if isinstance(destination, strings.TransferEntity)
             else playerInsert(destination)
         )
 
@@ -332,7 +314,7 @@ def createBlueprint():  # noqa: C901
         event = model.Event(
             lobby=lobby,
             time=datetime.datetime.utcnow(),
-            key=strings.Common.EVENT_TRANSFER,
+            key=strings.Bundle.EVENT_TRANSFER,
             inserts=[
                 playerInsert(player.id),
                 f"${amount}",
@@ -361,7 +343,7 @@ def createBlueprint():  # noqa: C901
 
         # Make sure the current player is the banker
         if player.id != lobby.banker:
-            return helpers.composeError(strings.ApiError.PLY_NOT_BANKER)
+            return helpers.composeError(strings.Bundle.ERROR_PLY_NOT_BANKER)
 
         # Parse the request data
         data = helpers.parseRequestData()
@@ -371,7 +353,7 @@ def createBlueprint():  # noqa: C901
         event = model.Event(
             lobby=lobby,
             time=datetime.datetime.utcnow(),
-            key=strings.Common.EVENT_PLY_TRANSFER_BANKER,
+            key=strings.Bundle.EVENT_PLY_TRANSFER_BANKER,
             inserts=[playerInsert(player.id), playerInsert(target)],
         )
         event.save()
@@ -395,7 +377,9 @@ def createBlueprint():  # noqa: C901
 
         # If the player is the banker, don't allow them to leave
         if player.id == lobby.banker:
-            return helpers.composeError(strings.ApiError.BANKER_CANNOT_LEAVE)
+            return helpers.composeError(
+                strings.Bundle.ERROR_BANKER_CANNOT_LEAVE
+            )
 
         # Transfer the player's balance back to the bank
         lobby.bank += player.balance
@@ -407,7 +391,7 @@ def createBlueprint():  # noqa: C901
         event = model.Event(
             lobby=lobby,
             time=datetime.datetime.utcnow(),
-            key=strings.Common.EVENT_PLY_LEAVE,
+            key=strings.Bundle.EVENT_PLY_LEAVE,
         )
         event.save()
         updateEventHash(lobby, event)
@@ -430,7 +414,7 @@ def createBlueprint():  # noqa: C901
 
         # If the player is not the banker, return permission error
         if player.id != lobby.banker:
-            return helpers.composeError(strings.ApiError.PLY_NOT_BANKER)
+            return helpers.composeError(strings.Bundle.ERROR_PLY_NOT_BANKER)
 
         # Mark the lobby as disbanded
         lobby.disbanded = True
@@ -439,7 +423,7 @@ def createBlueprint():  # noqa: C901
         event = model.Event(
             lobby=lobby,
             time=datetime.datetime.utcnow(),
-            key=strings.Common.EVENT_DISBANDED,
+            key=strings.Bundle.EVENT_DISBANDED,
         )
         event.save()
 
@@ -462,18 +446,18 @@ def createBlueprint():  # noqa: C901
 
         # Make sure the current player is the banker
         if player.id != lobby.banker:
-            return helpers.composeError(strings.ApiError.PLY_NOT_BANKER)
+            return helpers.composeError(strings.Bundle.ERROR_PLY_NOT_BANKER)
 
         # Parse the request data and find the target player
         data = helpers.parseRequestData()
         try:
             target = lobby.players.get(id=data["target"])
         except mongoengine.DoesNotExist:
-            return helpers.composeError(strings.ApiError.KICK_NOT_FOUND)
+            return helpers.composeError(strings.Bundle.ERROR_KICK_NOT_FOUND)
 
         # Make sure the target isn't themselves
         if target.id == player.id:
-            return helpers.composeError(strings.ApiError.KICK_YOURSELF)
+            return helpers.composeError(strings.Bundle.ERROR_KICK_YOURSELF)
 
         # Transfer the target's balance back to the bank
         lobby.bank += target.balance
@@ -485,7 +469,7 @@ def createBlueprint():  # noqa: C901
         event = model.Event(
             lobby=lobby,
             time=datetime.datetime.utcnow(),
-            key=strings.Common.EVENT_PLY_KICK,
+            key=strings.Bundle.EVENT_PLY_KICK,
         )
         event.save()
         updateEventHash(lobby, event)

@@ -2,30 +2,23 @@
 import enum
 
 
-# Simple string messages for errors returned by the api
-class ApiError(enum.Enum):
-    BANKER_CANNOT_LEAVE = "You are the banker. You cannot leave."
-    KICK_NOT_FOUND = "Target player not found"
-    KICK_YOURSELF = "You cannot kick yourself"
-    PLY_NAME_BLACKLIST = "That player name is not allowed"
-    PLY_NOT_ACTIVE = "You are no longer part of this lobby"
-    PLY_NOT_BANKER = "You are not the banker!"
-    LOBBY_CODE_INVALID = "Lobby with this code does not exist"
-    LOBBY_FULL = "This lobby is full"
-    LOBBY_EXPIRED = "This lobby has expired"
-    LOBBY_INVALID = "Invalid lobby data"
-    SESSION_INVALID = "Invalid session data"
-    TRANSFER_INVALID_SRC = "Invalid transfer source"
-    TRANSFER_FUNDS = "Insufficient funds"
-    TRANSFER_INVALID_DEST = "Invalid transfer destination"
+class Bundle(enum.Enum):
+    # Error strings
+    ERROR_BANKER_CANNOT_LEAVE = "You are the banker. You cannot leave."
+    ERROR_KICK_NOT_FOUND = "Target player not found"
+    ERROR_KICK_YOURSELF = "You cannot kick yourself"
+    ERROR_PLY_NAME_BLACKLIST = "That player name is not allowed"
+    ERROR_PLY_NOT_ACTIVE = "You are no longer part of this lobby"
+    ERROR_PLY_NOT_BANKER = "You are not the banker!"
+    ERROR_LOBBY_CODE_INVALID = "Lobby with this code does not exist"
+    ERROR_LOBBY_FULL = "This lobby is full"
+    ERROR_LOBBY_EXPIRED = "This lobby has expired"
+    ERROR_LOBBY_INVALID = "Invalid lobby data"
+    ERROR_SESSION_INVALID = "Invalid session data"
+    ERROR_TRANSFER_INVALID_SRC = "Invalid transfer source"
+    ERROR_TRANSFER_FUNDS = "Insufficient funds"
+    ERROR_TRANSFER_INVALID_DEST = "Invalid transfer destination"
 
-
-# Dictionary map of enum, for sending to front-end
-apiErrorMap = {mem.name: mem.value for mem in ApiError}
-
-
-# Messages for event objects. Contain formatting placeholders.
-class Common(enum.Enum):
     # Event strings
     EVENT_BANK_TRANSFER_START = (
         "The Bank transferred {0} to {1} to get them started."
@@ -51,4 +44,33 @@ class Common(enum.Enum):
 
 
 # Dictionary map of enum, for sending to front-end
-commonMap = {mem.name: mem.value for mem in Common}
+bundleMap = {mem.name: mem.value for mem in Bundle}
+
+
+# Enum representing the various entities players can transfer fund to/from
+class TransferEntity(enum.Enum):
+    SELF = "__self__"
+    BANK = "__bank__"
+    FP = "__fp__"
+
+
+# Dictionary of the transfer entities
+transferEntityMap = {mem.name: mem.value for mem in TransferEntity}
+
+
+# Blacklist of names players cannot use
+playerNameBlacklist = [
+    "player",
+    "themself",
+    "themselves",
+    "the bank",
+    "bank",
+    "banker",
+    "the",
+    "free parking",
+    "free",
+    "parking",
+    "__self__",
+    "__bank__",
+    "__fp__",
+]

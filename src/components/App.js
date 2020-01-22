@@ -152,7 +152,8 @@ export default function App(props) {
 
     // If there's an error, surface it to the user
     if (resp.error) {
-      setJoinError(preflightData.apiErrorMap[resp.error]);
+      const errorText = preflightData.bundleMap[resp.error] || resp.error;
+      setJoinError(errorText);
     }
 
     // Else, store the user ID
@@ -196,42 +197,44 @@ export default function App(props) {
   };
 
   const formatEvent = event => {
-    return preflightData.commonMap[event.key].replace(
-      /\{(\d+)\}/g,
-      (match, group1) => {
-        const idx = parseInt(group1, 10);
-        const insert = event.inserts[idx];
+    const eventText = preflightData.bundleMap[event.key];
+    return eventText === undefined
+      ? event.key
+      : eventText.replace(/\{(\d+)\}/g, (match, group1) => {
+          const idx = parseInt(group1, 10);
+          const insert = event.inserts[idx];
 
-        // Index MAY not exist if server code has changed
-        if (insert !== undefined) {
-          // Arrays are processed as special types
-          if (Array.isArray(insert)) {
-            const [insertKind, insertValue] = insert;
+          // Index MAY not exist if server code has changed
+          if (insert !== undefined) {
+            // Arrays are processed as special types
+            if (Array.isArray(insert)) {
+              const [insertKind, insertValue] = insert;
 
-            switch (insertKind) {
-              // Player inserts should lookup and return player name
-              case "player":
-                const ply = getPlayer(insertValue);
-                return formatEventInsert(
-                  ply ? ply.name : "<em>disconnected</em>",
-                );
+              switch (insertKind) {
+                // Player inserts should lookup and return player name
+                case "player":
+                  const ply = getPlayer(insertValue);
+                  return formatEventInsert(
+                    ply ? ply.name : "<em>disconnected</em>",
+                  );
 
-              // Common inserts should look up the string from the bundle
-              case "common":
-                return formatEventInsert(preflightData.commonMap[insertValue]);
+                // Common inserts should look up the string from the bundle
+                case "bundle":
+                  return formatEventInsert(
+                    preflightData.bundleMap[insertValue],
+                  );
 
-              // Else, just try and jsonify the value
-              default:
-                return JSON.stringify(insertValue);
+                // Else, just try and jsonify the value
+                default:
+                  return JSON.stringify(insertValue);
+              }
+
+              // If it's not an object, just try returning it (it's prolly a string)
+            } else {
+              return formatEventInsert(insert);
             }
-
-            // If it's not an object, just try returning it (it's prolly a string)
-          } else {
-            return formatEventInsert(insert);
           }
-        }
-      },
-    );
+        });
   };
 
   return (
