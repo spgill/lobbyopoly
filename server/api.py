@@ -121,7 +121,7 @@ def createBlueprint():  # noqa: C901
         if lobbyCode:
             try:
                 lobby = model.Lobby.objects.get(
-                    code=lobbyCode, expires__gt=now
+                    code=lobbyCode, expires__gt=now, disbanded=False
                 )
             except mongoengine.DoesNotExist:
                 return helpers.composeError(
