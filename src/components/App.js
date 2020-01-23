@@ -175,7 +175,7 @@ export default function App(props) {
         )}
       </ToolbarContainer>
 
-      <MasterBox pad="large">
+      <MasterBox pad="medium">
         {/* Show the dice preloader when the page is loading */}
         {pageLoading.get() && <Preloader />}
 
