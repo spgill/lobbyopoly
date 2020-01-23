@@ -12,8 +12,6 @@ const Container = styled.div`
 `;
 
 const Number = styled.div`
-  ${props => console.log("THEME", props.theme)}
-
   flex-shrink: 0;
 
   display: flex;
