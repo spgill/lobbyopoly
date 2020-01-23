@@ -1,16 +1,17 @@
 // Vendor imports
-import { Grommet, Box, Button, Menu, TextInput, ThemeContext } from "grommet";
+import { Grommet, Box, Menu, ThemeContext } from "grommet";
+import * as hookstate from "@hookstate/core";
 import React from "react";
 import styled, { createGlobalStyle } from "styled-components";
 
 // Local imports
-import BulletedInstruction from "./BulletedInstruction";
 import Preloader from "../components/Preloader";
 import { ToolbarContainer, ToolbarTitle } from "../components/Toolbar";
+import * as global from "../config/state";
 import appTheme from "../config/theme";
 import * as api from "../util/api";
-import * as enumutil from "../util/enum";
 import { useInterval } from "../util/interval";
+import JoinView from "../views/JoinView";
 
 const ModifiedGrommetBase = styled(Grommet)`
   display: grid;
@@ -31,17 +32,6 @@ const GlobalStyle = createGlobalStyle`
   }
 `;
 
-const ContentContainer = styled.div`
-  overflow-x: hidden;
-  overflow-y: scroll;
-
-  margin-right: auto;
-  margin-left: auto;
-  width: calc(100vw - 1rem);
-  max-width: 512px;
-  padding: 1rem 0.5rem;
-`;
-
 const MasterBox = styled(Box)`
   position: relative;
 
@@ -54,39 +44,24 @@ const MasterBox = styled(Box)`
   width: 512px;
 `;
 
-const VerticalSpacer = styled.div`
-  height: calc(
-    ${props => props.theme.global.spacing} * ${props => props.factor || 1.0}
-  );
-`;
-
-const ErrorText = styled.p`
-  color: ${props => props.theme.global.colors["status-error"]};
-`;
-
 function formatEventInsert(el) {
   return `<span style="color: #91721f;">${el}</span>`;
 }
 
-const LobbyJoinMode = enumutil.createEnum({
-  NONE: enumutil.auto(),
-  JOIN: enumutil.auto(),
-  CREATE: enumutil.auto(),
-});
-
 export default function App(props) {
-  // App-wide state vars
-  const [isPageLoading, setPageLoading] = React.useState(true);
-  const [preflightData, setPreflightData] = React.useState(false);
-  const [playerId, setPlayerId] = React.useState(undefined);
-  const [lobbyData, setLobbyData] = React.useState(undefined);
-  const [lobbyEvents, setLobbyEvents] = React.useState([]);
+  // // App-wide state vars
+  // const [pageLoading.get(), pageLoading.set] = React.useState(true);
+  // const [preflightData.get(), preflightData.set] = React.useState(false);
+  // const [playerId.get(), playerId.set] = React.useState(undefined);
+  // const [lobbyData.get(), lobbyData.set] = React.useState(undefined);
+  // const [lobbyEvents.get(), lobbyEvents.set] = React.useState([]);
 
-  // Lobby join state vars
-  const [joinMode, setJoinMode] = React.useState(LobbyJoinMode.NONE);
-  const [joinCode, setJoinCode] = React.useState("");
-  const [joinName, setJoinName] = React.useState("");
-  const [joinError, setJoinError] = React.useState(undefined);
+  // Global state vars
+  const pageLoading = hookstate.useStateLink(global.pageLoadingLink);
+  const preflightData = hookstate.useStateLink(global.preflightDataLink);
+  const playerId = hookstate.useStateLink(global.playerIdLink);
+  const lobbyData = hookstate.useStateLink(global.lobbyDataLink);
+  const lobbyEvents = hookstate.useStateLink(global.lobbyEventsLink);
 
   // Refs
   const eventHash = React.useRef(null);
@@ -99,77 +74,51 @@ export default function App(props) {
       console.log("Preflight data:", resp);
 
       if (resp.payload) {
-        setPreflightData(resp.payload);
-        setPlayerId(resp.payload.playerId);
+        preflightData.set(resp.payload);
+        playerId.set(resp.payload.playerId);
       }
-      setPageLoading(false);
+      pageLoading.set(false);
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Main API polling function
   useInterval(async () => {
     // Only poll if there is a player ID, else clear the data
-    if (playerId) {
+    if (playerId.get()) {
       const pollData = await api.makeRequest("get", "/api/poll");
 
       // If there is an error, that likely means that the lobby is gone
       // or that the player has been kicked. So go back to the home page.
       if (pollData.error) {
-        setLobbyData(undefined);
-        setPlayerId(undefined);
+        lobbyData.set(undefined);
+        playerId.set(undefined);
       }
 
       // If there's no error, update the lobby data
       else {
-        setLobbyData(pollData.payload);
+        lobbyData.set(pollData.payload);
       }
-    } else if (lobbyData) {
-      setLobbyData(undefined);
+    } else if (lobbyData.get()) {
+      lobbyData.set(undefined);
     }
   }, 1000);
 
   // When the poll data changes, refresh the event log if needed
   React.useEffect(() => {
     (async () => {
-      if (lobbyData && lobbyData.eventHash !== eventHash.current) {
+      if (lobbyData.get() && lobbyData.get().eventHash !== eventHash.current) {
         const events = await api.makeRequest("get", "/api/events");
 
-        setLobbyEvents(events.payload);
+        lobbyEvents.set(events.payload);
         console.log("EVENTS", events.payload);
 
         // Update the ref'd event hash
-        eventHash.current = lobbyData.eventHash;
+        eventHash.current = lobbyData.get().eventHash;
       }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lobbyData]);
-
-  // Join form event handlers
-  const handleChangeJoinCode = ev => setJoinCode(ev.target.value);
-  const handleChangeJoinName = ev => setJoinName(ev.target.value);
-  const handleClickJoinLobby = async () => {
-    // Clear errors and set page loading
-    setJoinError(undefined);
-    setPageLoading(true);
-
-    // Hit the API to join/create lobby
-    const resp = await api.makeRequest("post", "/api/join", {
-      code: joinMode === LobbyJoinMode.JOIN ? joinCode : undefined,
-      name: joinName,
-    });
-
-    // If there's an error, surface it to the user
-    if (resp.error) {
-      const errorText = preflightData.bundleMap[resp.error] || resp.error;
-      setJoinError(errorText);
-    }
-
-    // Else, store the user ID
-    else {
-      setPlayerId(resp.payload);
-    }
-
-    setPageLoading(false);
-  };
 
   // When user clicks log out button
   const handleClickLeave = async () => {
@@ -178,8 +127,8 @@ export default function App(props) {
 
     // Now clear all the state var to reset back to the welcome form
     if (!resp.error) {
-      setLobbyData(undefined);
-      setPlayerId(undefined);
+      lobbyData.set(undefined);
+      playerId.set(undefined);
     }
   };
 
@@ -190,21 +139,17 @@ export default function App(props) {
 
     // Now clear all the state var to reset back to the welcome form
     if (!resp.error) {
-      setLobbyData(undefined);
-      setPlayerId(undefined);
+      lobbyData.set(undefined);
+      playerId.set(undefined);
     }
   };
 
   const getPlayer = id => {
-    for (const ply of lobbyData.players) {
-      if (ply._id === id) {
-        return ply;
-      }
-    }
+    return lobbyData.get().players.filter(ply => ply._id === id)[0];
   };
 
   const formatEvent = event => {
-    const eventText = preflightData.bundleMap[event.key];
+    const eventText = preflightData.get().bundleMap[event.key];
     return eventText === undefined
       ? event.key
       : eventText.replace(/\{(\d+)\}/g, (match, group1) => {
@@ -228,7 +173,7 @@ export default function App(props) {
                 // Common inserts should look up the string from the bundle
                 case "bundle":
                   return formatEventInsert(
-                    preflightData.bundleMap[insertValue],
+                    preflightData.get().bundleMap[insertValue],
                   );
 
                 // Else, just try and jsonify the value
@@ -268,8 +213,8 @@ export default function App(props) {
             label="Actions"
             items={[
               { label: "Leave Lobby", onClick: handleClickLeave },
-              lobbyData &&
-                lobbyData.banker === playerId && {
+              lobbyData.get() &&
+                lobbyData.get().banker === playerId.get() && {
                   label: "Disband Lobby",
                   onClick: handleClickDisband,
                 },
@@ -280,119 +225,37 @@ export default function App(props) {
 
       <MasterBox pad="large">
         {/* Show the dice preloader when the page is loading */}
-        {isPageLoading && <Preloader />}
+        {pageLoading.get() && <Preloader />}
 
         {/* If preflight is loaded, but player is not in a lobby */}
-        {preflightData && !playerId && (
-          <>
-            {/* Content switcher for joining vs creating */}
-            <BulletedInstruction n="1">
-              What do you want to do?
-            </BulletedInstruction>
-
-            <VerticalSpacer factor={1} />
-
-            <Button
-              label="Join a lobby"
-              active={joinMode === LobbyJoinMode.JOIN}
-              onClick={() => setJoinMode(LobbyJoinMode.JOIN)}
-            />
-            <VerticalSpacer factor={0.382} />
-            <Button
-              label="Create a new lobby"
-              active={joinMode === LobbyJoinMode.CREATE}
-              onClick={() => setJoinMode(LobbyJoinMode.CREATE)}
-            />
-
-            {joinMode !== LobbyJoinMode.NONE && (
-              <>
-                <VerticalSpacer factor={1} />
-                <hr style={{ margin: "0" }} />
-                <VerticalSpacer factor={1} />
-              </>
-            )}
-
-            {joinMode === LobbyJoinMode.JOIN && (
-              <>
-                <BulletedInstruction n="2">
-                  To join a lobby, just enter the lobby code below, enter your
-                  name, and press the button.
-                </BulletedInstruction>
-                <VerticalSpacer factor={1} />
-                <TextInput
-                  placeholder="Lobby code"
-                  value={joinCode}
-                  onChange={handleChangeJoinCode}
-                  type="tel"
-                />
-                <VerticalSpacer factor={0.382} />
-                <TextInput
-                  placeholder="Your name"
-                  value={joinName}
-                  onChange={handleChangeJoinName}
-                />
-                <VerticalSpacer />
-                <Button
-                  primary={true}
-                  label="Join Lobby"
-                  onClick={handleClickJoinLobby}
-                  disabled={!(joinCode && joinName)}
-                />
-              </>
-            )}
-
-            {joinMode === LobbyJoinMode.CREATE && (
-              <>
-                <BulletedInstruction n="2">
-                  To create a lobby, just enter your name below and press the
-                  button.
-                </BulletedInstruction>
-                <VerticalSpacer factor={1} />
-                <TextInput
-                  placeholder="Your name"
-                  value={joinName}
-                  onChange={handleChangeJoinName}
-                />
-                <VerticalSpacer />
-                <Button
-                  primary={true}
-                  label="Create Lobby"
-                  onClick={handleClickJoinLobby}
-                  disabled={!joinName}
-                />
-              </>
-            )}
-
-            {joinError && <ErrorText>{joinError}</ErrorText>}
-          </>
-        )}
+        {preflightData.get() && !playerId.get() && <JoinView />}
 
         {/* Show quick loading screen while waiting on first poll to complete */}
-        {preflightData && playerId && !lobbyData && (
+        {preflightData.get() && playerId.get() && !lobbyData.get() && (
           <p style={{ textAlign: "center" }}>Loading...</p>
         )}
 
         {/* If preflight is loaded AND player ID is determined AND lobby data is loaded */}
-        {preflightData && playerId && lobbyData && (
+        {preflightData.get() && playerId.get() && lobbyData.get() && (
           <>
             <span>
-              Lobby code: <code>{lobbyData.code}</code>
+              Lobby code: <code>{lobbyData.get().code}</code>
             </span>
             <Box>
               <h3>Bank</h3>
-              <code>{lobbyData.bank}</code>
+              <code>{lobbyData.get().bank}</code>
             </Box>
             <Box>
               <h3>Free Parking</h3>
-              <code>{lobbyData.freeParking}</code>
+              <code>{lobbyData.get().freeParking}</code>
             </Box>
             <Box>
               <h3>My funds</h3>
-              <code>{getPlayer(playerId).balance}</code>
+              <code>{getPlayer(playerId.get()).balance}</code>
             </Box>
             <Box>
               <ul>
-                {lobbyEvents.map(event => (
+                {lobbyEvents.get().map(event => (
                   <li
                     key={event._id}
                     dangerouslySetInnerHTML={{
@@ -405,7 +268,7 @@ export default function App(props) {
           </>
         )}
 
-        {/* {JSON.stringify(lobbyData, null, 1)} */}
+        {/* {JSON.stringify(lobbyData.get(), null, 1)} */}
       </MasterBox>
 
       {/* </Box> */}
