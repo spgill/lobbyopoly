@@ -49,13 +49,6 @@ function formatEventInsert(el) {
 }
 
 export default function App(props) {
-  // // App-wide state vars
-  // const [pageLoading.get(), pageLoading.set] = React.useState(true);
-  // const [preflightData.get(), preflightData.set] = React.useState(false);
-  // const [playerId.get(), playerId.set] = React.useState(undefined);
-  // const [lobbyData.get(), lobbyData.set] = React.useState(undefined);
-  // const [lobbyEvents.get(), lobbyEvents.set] = React.useState([]);
-
   // Global state vars
   const pageLoading = hookstate.useStateLink(global.pageLoadingLink);
   const preflightData = hookstate.useStateLink(global.preflightDataLink);
