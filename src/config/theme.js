@@ -22,6 +22,8 @@ export default {
       brandAlt: "#0D47A1",
 
       bgDark: "#263238",
+
+      monopolyPaleGreen: "#cae8e0",
     },
 
     focus: {
