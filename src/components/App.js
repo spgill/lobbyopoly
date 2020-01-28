@@ -1,6 +1,5 @@
 // Vendor imports
 import { Grommet, Box, Menu, ThemeContext } from "grommet";
-import * as hookstate from "@hookstate/core";
 import React from "react";
 import styled, { createGlobalStyle } from "styled-components";
 
@@ -107,8 +106,6 @@ export default function App(props) {
       }
 
       setPageLoading(false);
-    } else if (lobbyData) {
-      setLobbyData(undefined);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playerId]);

@@ -1,9 +1,12 @@
 // vendor imports
 import * as hookstate from "@hookstate/core";
+import React from "react";
 
 export function useDerefStateLink(linkRef) {
   const link = hookstate.useStateLink(linkRef);
-  return [link.get(), val => link.set(val)];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const setter = React.useCallback(val => link.set(val), [link.set]);
+  return [link.get(), setter];
 }
 
 /** Is the application loading something? */
