@@ -171,7 +171,7 @@ def createBlueprint():  # noqa: C901
             lobby=lobby,
             time=datetime.datetime.utcnow(),
             key=strings.Bundle.EVENT_PLY_JOIN,
-            inserts=[playerInsert(player.id)],
+            inserts=[playerInsert(player.id), f"${player.balance}"],
         )
         joinEvent.save()
 
@@ -185,18 +185,13 @@ def createBlueprint():  # noqa: C901
                 inserts=[playerInsert(player.id)],
             )
             bankerEvent.save()
+            updateEventHash(lobby, bankerEvent)
 
-        # Log an event showing the initial transfer of money to the player
-        transferEvent = model.Event(
-            lobby=lobby,
-            time=datetime.datetime.utcnow(),
-            key=strings.Bundle.EVENT_BANK_TRANSFER_START,
-            inserts=[f"${player.balance}", playerInsert(player.id)],
-        )
-        transferEvent.save()
+        # else, update the event hash with the join event
+        else:
+            updateEventHash(lobby, joinEvent)
 
-        # Update the lobby's log hash and save changes
-        updateEventHash(lobby, transferEvent)
+        # Save changes to the lobby
         lobby.save()
 
         # Store the lobby id and player id in the player's session

@@ -20,10 +20,7 @@ class Bundle(enum.Enum):
     ERROR_TRANSFER_INVALID_DEST = "Invalid transfer destination"
 
     # Event strings
-    EVENT_BANK_TRANSFER_START = (
-        "The Bank transferred {0} to {1} to get them started."
-    )
-    EVENT_PLY_JOIN = "{0} joined the game."
+    EVENT_PLY_JOIN = "{0} joined the game. The Bank gave them {1} to get started."
     EVENT_PLY_MADE_BANKER = "{0} has been made The Banker."
     EVENT_PLY_TRANSFER_BANKER = (
         "{0} transferred Banker responsibilities to {1}."
