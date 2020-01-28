@@ -74,6 +74,10 @@ export default function App(props) {
       if (!resp.error) {
         setPreflightData(resp.payload);
         setPlayerId(resp.payload.playerId);
+
+        if (!resp.payload.playerId) {
+          setPageLoading(false);
+        }
       }
 
       // If there was an error, stop the preloader

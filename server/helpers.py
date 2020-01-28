@@ -22,7 +22,7 @@ def _customEncoder(obj):
         return msgpack.ExtType(
             0x30,
             struct.pack(
-                "f", obj.replace(tzinfo=datetime.timezone.utc).timestamp()
+                "!d", obj.replace(tzinfo=datetime.timezone.utc).timestamp(),
             ),
         )
     return obj

@@ -6,6 +6,8 @@
     "@hookstate/core": "^1.4.1",
     "@ibm/plex": "^1.4.1",
     "axios": "^0.18.0",
+    "bufferpack": "0.0.6",
+    "dayjs": "^1.8.19",
     "eslint-plugin-prettier": "^3.0.1",
     "grommet": "^2.7.1",
     "msgpack-lite": "^0.1.26",
