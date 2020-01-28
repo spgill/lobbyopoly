@@ -1,6 +1,11 @@
 // vendor imports
 import * as hookstate from "@hookstate/core";
 
+export function useDerefStateLink(linkRef) {
+  const link = hookstate.useStateLink(linkRef);
+  return [link.get(), val => link.set(val)];
+}
+
 /** Is the application loading something? */
 export const pageLoadingLink = hookstate.createStateLink(true);
 

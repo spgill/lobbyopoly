@@ -14,7 +14,7 @@ import JoinView from "../views/JoinView";
 import PlayView from "../views/PlayView";
 
 // #region Constants
-const POLLING_INTERVAL = 1500;
+const POLLING_INTERVAL = 1000 * 3; // 3 seconds
 // #endregion
 
 const ModifiedGrommetBase = styled(Grommet)`
@@ -50,11 +50,17 @@ const MasterBox = styled(Box)`
 
 export default function App(props) {
   // Global state vars
-  const pageLoading = hookstate.useStateLink(global.pageLoadingLink);
-  const preflightData = hookstate.useStateLink(global.preflightDataLink);
-  const playerId = hookstate.useStateLink(global.playerIdLink);
-  const lobbyData = hookstate.useStateLink(global.lobbyDataLink);
-  const lobbyEvents = hookstate.useStateLink(global.lobbyEventsLink);
+  const [isPageLoading, setPageLoading] = global.useDerefStateLink(
+    global.pageLoadingLink,
+  );
+  const [preflightData, setPreflightData] = global.useDerefStateLink(
+    global.preflightDataLink,
+  );
+  const [playerId, setPlayerId] = global.useDerefStateLink(global.playerIdLink);
+  const [lobbyData, setLobbyData] = global.useDerefStateLink(
+    global.lobbyDataLink,
+  );
+  const [, setLobbyEvents] = global.useDerefStateLink(global.lobbyEventsLink);
 
   // Refs
   const pollingInterval = React.useRef(null);
@@ -70,13 +76,13 @@ export default function App(props) {
       // If there is no error, set the data and player id and leave
       // the preloader going.
       if (!resp.error) {
-        preflightData.set(resp.payload);
-        playerId.set(resp.payload.playerId);
+        setPreflightData(resp.payload);
+        setPlayerId(resp.payload.playerId);
       }
 
       // If there was an error, stop the preloader
       else {
-        pageLoading.set(false);
+        setPageLoading(false);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -85,27 +91,27 @@ export default function App(props) {
   // Main API polling function
   const pollLobbyData = React.useCallback(async () => {
     // Only poll if there is a player ID, else clear the data
-    if (playerId.get()) {
+    if (playerId) {
       const pollData = await api.makeRequest("get", "/api/poll");
 
       // If there is an error, that likely means that the lobby is gone
       // or that the player has been kicked. So go back to the home page.
       if (pollData.error) {
-        lobbyData.set(undefined);
-        playerId.set(undefined);
+        setLobbyData(undefined);
+        setPlayerId(undefined);
       }
 
       // If there's no error, update the lobby data
       else {
-        lobbyData.set(pollData.payload);
+        setLobbyData(pollData.payload);
       }
 
-      pageLoading.set(false);
-    } else if (lobbyData.get()) {
-      lobbyData.set(undefined);
+      setPageLoading(false);
+    } else if (lobbyData) {
+      setLobbyData(undefined);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playerId.get()]);
+  }, [playerId]);
 
   // Effect to start polling interval
   React.useEffect(() => {
@@ -121,17 +127,24 @@ export default function App(props) {
     };
   }, [pollLobbyData]);
 
+  // Effect to immediately trigger a new poll when the playerId changes
+  React.useEffect(() => {
+    if (playerId && !lobbyData) {
+      pollLobbyData();
+    }
+  }, [playerId, lobbyData, pollLobbyData]);
+
   // When the poll data changes, refresh the event log if needed
   React.useEffect(() => {
     (async () => {
-      if (lobbyData.get() && lobbyData.get().eventHash !== eventHash.current) {
+      if (lobbyData && lobbyData.eventHash !== eventHash.current) {
         const events = await api.makeRequest("get", "/api/events");
 
-        lobbyEvents.set(events.payload);
+        setLobbyEvents(events.payload);
         console.log("EVENTS", events.payload);
 
         // Update the ref'd event hash
-        eventHash.current = lobbyData.get().eventHash;
+        eventHash.current = lobbyData.eventHash;
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -144,8 +157,8 @@ export default function App(props) {
 
     // Now clear all the state var to reset back to the welcome form
     if (!resp.error) {
-      lobbyData.set(undefined);
-      playerId.set(undefined);
+      setLobbyData(undefined);
+      setPlayerId(undefined);
     }
   };
 
@@ -156,8 +169,8 @@ export default function App(props) {
 
     // Now clear all the state var to reset back to the welcome form
     if (!resp.error) {
-      lobbyData.set(undefined);
-      playerId.set(undefined);
+      setLobbyData(undefined);
+      setPlayerId(undefined);
     }
   };
 
@@ -167,7 +180,7 @@ export default function App(props) {
 
       <ToolbarContainer>
         <ToolbarTitle>Lobbyopoly</ToolbarTitle>
-        {lobbyData.get() && (
+        {lobbyData && (
           <ThemeContext.Extend
             value={{
               global: {
@@ -186,13 +199,13 @@ export default function App(props) {
               label="Actions"
               items={[
                 { label: "Rules", onClick: () => {} },
-                lobbyData.get() &&
-                  lobbyData.get().banker !== playerId.get() && {
+                lobbyData &&
+                  lobbyData.banker !== playerId && {
                     label: "Leave Lobby",
                     onClick: handleClickLeave,
                   },
-                lobbyData.get() &&
-                  lobbyData.get().banker === playerId.get() && {
+                lobbyData &&
+                  lobbyData.banker === playerId && {
                     label: "Disband Lobby",
                     onClick: handleClickDisband,
                   },
@@ -204,17 +217,15 @@ export default function App(props) {
 
       <MasterBox pad="medium">
         {/* Show the dice preloader when the page is loading */}
-        {pageLoading.get() && <Preloader />}
+        {isPageLoading && <Preloader />}
 
         {/* If preflight is loaded, but player is not in a lobby */}
-        {preflightData.get() && !playerId.get() && <JoinView />}
+        {preflightData && !playerId && <JoinView />}
 
         {/* If preflight is loaded AND player ID is determined AND lobby data is loaded */}
-        {preflightData.get() && playerId.get() && lobbyData.get() && (
-          <PlayView />
-        )}
+        {preflightData && playerId && lobbyData && <PlayView />}
 
-        {/* {JSON.stringify(lobbyData.get(), null, 1)} */}
+        {/* {JSON.stringify(lobbyData, null, 1)} */}
       </MasterBox>
 
       {/* </Box> */}
