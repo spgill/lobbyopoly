@@ -10,9 +10,12 @@ import { ToolbarContainer, ToolbarTitle } from "../components/Toolbar";
 import * as global from "../config/state";
 import appTheme from "../config/theme";
 import * as api from "../util/api";
-import { useInterval } from "../util/interval";
 import JoinView from "../views/JoinView";
 import PlayView from "../views/PlayView";
+
+// #region Constants
+const POLLING_INTERVAL = 1500;
+// #endregion
 
 const ModifiedGrommetBase = styled(Grommet)`
   display: grid;
@@ -54,6 +57,7 @@ export default function App(props) {
   const lobbyEvents = hookstate.useStateLink(global.lobbyEventsLink);
 
   // Refs
+  const pollingInterval = React.useRef(null);
   const eventHash = React.useRef(null);
 
   // On component mount, begin fetch of preflight data
@@ -79,16 +83,10 @@ export default function App(props) {
   }, []);
 
   // Main API polling function
-  useInterval(async () => {
+  const pollLobbyData = React.useCallback(async () => {
     // Only poll if there is a player ID, else clear the data
     if (playerId.get()) {
       const pollData = await api.makeRequest("get", "/api/poll");
-
-      // If the lobby data is undefined, then this is the first poll, and
-      // we should turn off the preloader
-      if (lobbyData.get() === undefined) {
-        pageLoading.set(false);
-      }
 
       // If there is an error, that likely means that the lobby is gone
       // or that the player has been kicked. So go back to the home page.
@@ -101,10 +99,27 @@ export default function App(props) {
       else {
         lobbyData.set(pollData.payload);
       }
+
+      pageLoading.set(false);
     } else if (lobbyData.get()) {
       lobbyData.set(undefined);
     }
-  }, 1000);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playerId.get()]);
+
+  // Effect to start polling interval
+  React.useEffect(() => {
+    console.warn("Starting interval...");
+    pollingInterval.current = window.setInterval(
+      pollLobbyData,
+      POLLING_INTERVAL,
+    );
+
+    return () => {
+      console.warn("Stopping interval...");
+      clearInterval(pollingInterval.current);
+    };
+  }, [pollLobbyData]);
 
   // When the poll data changes, refresh the event log if needed
   React.useEffect(() => {
