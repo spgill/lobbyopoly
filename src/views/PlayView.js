@@ -17,6 +17,30 @@ import { ReactComponent as BankIcon } from "../assets/icons/noun_Piggy Bank_2342
 import { ReactComponent as FPIcon } from "../assets/icons/noun_Parking_451846.svg";
 import { ReactComponent as TransactionIcon } from "../assets/icons/noun_transaction_763895.svg";
 
+const LobbyInfoLineSpacer = styled.span`
+  flex-grow: 1;
+  display: inline-block;
+`;
+
+const LobbyInfoLine = styled(Text)`
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+
+  > em {
+    margin-left: 0.5rem;
+    border-radius: 2em;
+    height: 1.3em;
+    padding: 0.15em 0.5em;
+
+    background: ${props => props.theme.global.colors.brandAlt};
+
+    font-style: normal;
+    color: ${props => props.theme.global.colors.text.dark};
+  }
+`;
+
 const MoneyBoxBalanceLine = styled.span`
   grid-column: 1 / span 2;
 
@@ -150,7 +174,7 @@ export default function PlayView(props) {
         });
   };
 
-  const isBanker = playerId.get() !== lobbyData.get().banker;
+  const isBanker = playerId.get() === lobbyData.get().banker;
 
   // List of "money boxes" representing the different balances
   const moneyBoxList = [
@@ -177,9 +201,15 @@ export default function PlayView(props) {
   return (
     <>
       {/* Show the lobby code */}
-      <Text>
-        Lobby code: <code>{lobbyData.get().code}</code>
-      </Text>
+      <LobbyInfoLine>
+        Lobby code: <em>{lobbyData.get().code}</em>
+        {isBanker && (
+          <>
+            <LobbyInfoLineSpacer />
+            Expires: WIP
+          </>
+        )}
+      </LobbyInfoLine>
       <VerticalSpacer factor={0.618} />
 
       {/* Map and insert all the money boxes */}
