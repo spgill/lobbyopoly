@@ -1,6 +1,5 @@
 // Vendor imports
 import { Button, TextInput } from "grommet";
-import * as hookstate from "@hookstate/core";
 import React from "react";
 import styled from "styled-components";
 
@@ -22,10 +21,10 @@ const LobbyJoinMode = enumutil.createEnum({
 });
 
 export default function JoinView(props) {
-  // Global state vars
-  const pageLoading = hookstate.useStateLink(global.pageLoadingLink);
-  const preflightData = hookstate.useStateLink(global.preflightDataLink);
-  const playerId = hookstate.useStateLink(global.playerIdLink);
+  // Global state reducer
+  const [globalState, globalDispatch] = React.useContext(
+    global.GlobalStateContext,
+  );
 
   // Local state vars
   const [joinMode, setJoinMode] = React.useState(LobbyJoinMode.NONE);
@@ -39,7 +38,7 @@ export default function JoinView(props) {
   const handleClickJoinLobby = async () => {
     // Clear errors and set page loading
     setJoinError(undefined);
-    pageLoading.set(true);
+    globalDispatch({ type: global.GlobalStateAction.PAGE_LOADING_START });
 
     // Hit the API to join/create lobby
     const resp = await api.makeRequest("post", "/api/join", {
@@ -49,16 +48,20 @@ export default function JoinView(props) {
 
     // If there's an error, surface it to the user
     if (resp.error) {
-      const errorText = preflightData.get().bundleMap[resp.error] || resp.error;
+      const errorText =
+        globalState.preflight.bundleMap[resp.error] || resp.error;
       setJoinError(errorText);
     }
 
     // Else, store the user ID
     else {
-      playerId.set(resp.payload);
+      globalDispatch({
+        type: global.GlobalStateAction.PLAYER_ID_SET,
+        payload: resp.payload,
+      });
     }
 
-    pageLoading.set(false);
+    globalDispatch({ type: global.GlobalStateAction.PAGE_LOADING_STOP });
   };
 
   return (

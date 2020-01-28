@@ -1,25 +1,65 @@
 // vendor imports
-import * as hookstate from "@hookstate/core";
 import React from "react";
 
-export function useDerefStateLink(linkRef) {
-  const link = hookstate.useStateLink(linkRef);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const setter = React.useCallback(val => link.set(val), [link.set]);
-  return [link.get(), setter];
+// local imports
+import * as enumutil from "../util/enum";
+
+// Initial global state for the application
+export const initialState = {
+  pageLoading: true,
+  playerId: null,
+  preflight: null,
+  poll: null,
+  events: [],
+};
+
+// Context for passing down the application state
+export const GlobalStateContext = React.createContext(initialState);
+
+// Enum representing the possible action types on the global state
+export const GlobalStateAction = enumutil.createEnum({
+  RETURN_HOME: enumutil.auto(),
+  PAGE_LOADING_START: enumutil.auto(),
+  PAGE_LOADING_STOP: enumutil.auto(),
+  PLAYER_ID_SET: enumutil.auto(),
+  PREFLIGHT_SET: enumutil.auto(),
+  POLL_SET: enumutil.auto(),
+  EVENTS_SET: enumutil.auto(),
+});
+
+// Reducer for handling actions on the global state
+export function globalStateReducer(currentState, action) {
+  switch (action.type) {
+    case GlobalStateAction.RETURN_HOME:
+      return {
+        ...currentState,
+        preflight: initialState.preflight,
+        poll: initialState.poll,
+      };
+
+    case GlobalStateAction.PAGE_LOADING_START:
+      return { ...currentState, pageLoading: true };
+
+    case GlobalStateAction.PAGE_LOADING_STOP:
+      return { ...currentState, pageLoading: false };
+
+    case GlobalStateAction.PLAYER_ID_SET:
+      return { ...currentState, playerId: action.payload };
+
+    case GlobalStateAction.PREFLIGHT_SET:
+      return {
+        ...currentState,
+        playerId: action.payload.playerId,
+        preflight: action.payload,
+      };
+    case GlobalStateAction.POLL_SET:
+      return { ...currentState, poll: action.payload };
+
+    case GlobalStateAction.EVENTS_SET:
+      return { ...currentState, events: action.payload };
+
+    default:
+      console.error(`UNKNOWN ACTION TYPE "${action.type}"`);
+      return currentState;
+  }
 }
-
-/** Is the application loading something? */
-export const pageLoadingLink = hookstate.createStateLink(true);
-
-/** Application preflight data */
-export const preflightDataLink = hookstate.createStateLink(undefined);
-
-/** The current player's id */
-export const playerIdLink = hookstate.createStateLink(undefined);
-
-/** The current lobby's data */
-export const lobbyDataLink = hookstate.createStateLink(undefined);
-
-/** Array of lobby's events */
-export const lobbyEventsLink = hookstate.createStateLink([]);

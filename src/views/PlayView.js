@@ -1,6 +1,5 @@
 // Vendor imports
 import { Box, Button, Text, ThemeContext } from "grommet";
-import * as hookstate from "@hookstate/core";
 import * as polished from "polished";
 import React from "react";
 import reactStringReplace from "react-string-replace";
@@ -123,18 +122,15 @@ const LogBox = styled(Box)`
 `;
 
 export default function PlayView(props) {
-  // Global state vars
-  const preflightData = hookstate.useStateLink(global.preflightDataLink);
-  const playerId = hookstate.useStateLink(global.playerIdLink);
-  const lobbyData = hookstate.useStateLink(global.lobbyDataLink);
-  const lobbyEvents = hookstate.useStateLink(global.lobbyEventsLink);
+  // Global state reducer
+  const [globalState] = React.useContext(global.GlobalStateContext);
 
   const getPlayer = id => {
-    return lobbyData.get().players.filter(ply => ply._id === id)[0];
+    return globalState.poll.players.filter(ply => ply._id === id)[0];
   };
 
   const formatEvent = event => {
-    const eventText = preflightData.get().bundleMap[event.key];
+    const eventText = globalState.preflight.bundleMap[event.key];
     return eventText === undefined
       ? event.key
       : reactStringReplace(eventText, /\{(\d+)\}/g, (match, i) => {
@@ -158,7 +154,9 @@ export default function PlayView(props) {
                 // Common inserts should look up the string from the bundle
                 case "bundle":
                   return (
-                    <u key={i}>{preflightData.get().bundleMap[insertValue]}</u>
+                    <u key={i}>
+                      {globalState.preflight.bundleMap[insertValue]}
+                    </u>
                   );
 
                 // Else, just try and jsonify the value
@@ -174,26 +172,26 @@ export default function PlayView(props) {
         });
   };
 
-  const isBanker = playerId.get() === lobbyData.get().banker;
+  const isBanker = globalState.playerId === globalState.poll.banker;
 
   // List of "money boxes" representing the different balances
   const moneyBoxList = [
     {
-      icon: <PlayerAvatar playerId={playerId.get()} size="4rem" />,
+      icon: <PlayerAvatar playerId={globalState.playerId} size="4rem" />,
       title: "My funds",
-      balance: getPlayer(playerId.get()).balance,
+      balance: getPlayer(globalState.playerId).balance,
       transferable: true,
     },
     {
       icon: <BankIcon />,
       title: "The Bank",
-      balance: lobbyData.get().bank,
+      balance: globalState.poll.bank,
       transferable: isBanker,
     },
     {
       icon: <FPIcon />,
       title: "Free Parking",
-      balance: lobbyData.get().freeParking,
+      balance: globalState.poll.freeParking,
       transferable: isBanker,
     },
   ];
@@ -202,11 +200,11 @@ export default function PlayView(props) {
     <>
       {/* Show the lobby code */}
       <LobbyInfoLine>
-        Lobby code: <em>{lobbyData.get().code}</em>
+        Lobby code: <em>{globalState.poll.code}</em>
         {isBanker && (
           <>
             <LobbyInfoLineSpacer />
-            Expires: WIP
+            {/* Expires: {console.warn("LOBBY", lobbyData.get().expires)} */}
           </>
         )}
       </LobbyInfoLine>
@@ -239,7 +237,7 @@ export default function PlayView(props) {
         <LogBox pad="xsmall" elevation="small">
           <h4>Event Log</h4>
           <ul>
-            {lobbyEvents.get().map(event => (
+            {globalState.events.map(event => (
               <li key={event._id}>{formatEvent(event)}</li>
             ))}
           </ul>

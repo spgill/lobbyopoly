@@ -1,5 +1,4 @@
 // Vendor imports
-import * as hookstate from "@hookstate/core";
 import React from "react";
 import styled, { css } from "styled-components";
 
@@ -44,10 +43,11 @@ const Backdrop = styled.div`
 `;
 
 export default function PlayerAvatar(props) {
-  // Global state vars
-  const lobbyData = hookstate.useStateLink(global.lobbyDataLink);
+  // Global state reducer
+  const [globalState] = React.useContext(global.GlobalStateContext);
 
-  const isBanker = props.playerId === lobbyData.get().banker;
+  const isBanker =
+    globalState.poll && props.playerId === globalState.poll.banker;
 
   return (
     <Container size={props.size} highlight={isBanker}>

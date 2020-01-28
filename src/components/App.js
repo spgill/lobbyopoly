@@ -45,18 +45,11 @@ const MasterBox = styled(Box)`
 `;
 
 export default function App(props) {
-  // Global state vars
-  const [isPageLoading, setPageLoading] = global.useDerefStateLink(
-    global.pageLoadingLink,
+  // Global state reducer
+  const [globalState, globalDispatch] = React.useReducer(
+    global.globalStateReducer,
+    global.initialState,
   );
-  const [preflightData, setPreflightData] = global.useDerefStateLink(
-    global.preflightDataLink,
-  );
-  const [playerId, setPlayerId] = global.useDerefStateLink(global.playerIdLink);
-  const [lobbyData, setLobbyData] = global.useDerefStateLink(
-    global.lobbyDataLink,
-  );
-  const [, setLobbyEvents] = global.useDerefStateLink(global.lobbyEventsLink);
 
   // Refs
   const pollingInterval = React.useRef(null);
@@ -72,17 +65,23 @@ export default function App(props) {
       // If there is no error, set the data and player id and leave
       // the preloader going.
       if (!resp.error) {
-        setPreflightData(resp.payload);
-        setPlayerId(resp.payload.playerId);
+        globalDispatch({
+          type: global.GlobalStateAction.PREFLIGHT_SET,
+          payload: resp.payload,
+        });
 
         if (!resp.payload.playerId) {
-          setPageLoading(false);
+          globalDispatch({
+            type: global.GlobalStateAction.PAGE_LOADING_STOP,
+          });
         }
       }
 
       // If there was an error, stop the preloader
       else {
-        setPageLoading(false);
+        globalDispatch({
+          type: global.GlobalStateAction.PAGE_LOADING_STOP,
+        });
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -91,25 +90,28 @@ export default function App(props) {
   // Main API polling function
   const pollLobbyData = React.useCallback(async () => {
     // Only poll if there is a player ID, else clear the data
-    if (playerId) {
+    if (globalState.playerId) {
       const pollData = await api.makeRequest("get", "/api/poll");
 
       // If there is an error, that likely means that the lobby is gone
       // or that the player has been kicked. So go back to the home page.
       if (pollData.error) {
-        setLobbyData(undefined);
-        setPlayerId(undefined);
+        globalDispatch({ type: global.GlobalStateAction.RETURN_HOME });
       }
 
       // If there's no error, update the lobby data
       else {
-        setLobbyData(pollData.payload);
+        console.log("LATEST POLL", pollData.payload);
+        globalDispatch({
+          type: global.GlobalStateAction.POLL_SET,
+          payload: pollData.payload,
+        });
       }
 
-      setPageLoading(false);
+      globalDispatch({ type: global.GlobalStateAction.PAGE_LOADING_STOP });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playerId]);
+  }, [globalState.playerId]);
 
   // Effect to start polling interval
   React.useEffect(() => {
@@ -127,26 +129,32 @@ export default function App(props) {
 
   // Effect to immediately trigger a new poll when the playerId changes
   React.useEffect(() => {
-    if (playerId && !lobbyData) {
+    if (globalState.playerId && !globalState.poll) {
       pollLobbyData();
     }
-  }, [playerId, lobbyData, pollLobbyData]);
+  }, [globalState.playerId, globalState.poll, pollLobbyData]);
 
   // When the poll data changes, refresh the event log if needed
   React.useEffect(() => {
     (async () => {
-      if (lobbyData && lobbyData.eventHash !== eventHash.current) {
+      if (
+        globalState.poll &&
+        globalState.poll.eventHash !== eventHash.current
+      ) {
         const events = await api.makeRequest("get", "/api/events");
 
-        setLobbyEvents(events.payload);
+        globalDispatch({
+          type: global.GlobalStateAction.EVENTS_SET,
+          payload: events.payload,
+        });
         console.log("EVENTS", events.payload);
 
         // Update the ref'd event hash
-        eventHash.current = lobbyData.eventHash;
+        eventHash.current = globalState.poll.eventHash;
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lobbyData]);
+  }, [globalState.poll]);
 
   // When user clicks log out button
   const handleClickLeave = async () => {
@@ -155,8 +163,7 @@ export default function App(props) {
 
     // Now clear all the state var to reset back to the welcome form
     if (!resp.error) {
-      setLobbyData(undefined);
-      setPlayerId(undefined);
+      globalDispatch({ type: global.GlobalStateAction.RETURN_HOME });
     }
   };
 
@@ -167,8 +174,7 @@ export default function App(props) {
 
     // Now clear all the state var to reset back to the welcome form
     if (!resp.error) {
-      setLobbyData(undefined);
-      setPlayerId(undefined);
+      globalDispatch({ type: global.GlobalStateAction.RETURN_HOME });
     }
   };
 
@@ -176,58 +182,62 @@ export default function App(props) {
     <ModifiedGrommetBase theme={appTheme}>
       <GlobalStyle />
 
-      <ToolbarContainer>
-        <ToolbarTitle>Lobbyopoly</ToolbarTitle>
-        {lobbyData && (
-          <ThemeContext.Extend
-            value={{
-              global: {
-                colors: {
-                  control: {
-                    light: "white",
+      <global.GlobalStateContext.Provider value={[globalState, globalDispatch]}>
+        <ToolbarContainer>
+          <ToolbarTitle>Lobbyopoly</ToolbarTitle>
+          {globalState.poll && (
+            <ThemeContext.Extend
+              value={{
+                global: {
+                  colors: {
+                    control: {
+                      light: "white",
+                    },
                   },
                 },
-              },
-              menu: {
-                background: "bgDark",
-              },
-            }}>
-            <Menu
-              style={{ marginLeft: "auto" }}
-              label="Actions"
-              items={[
-                { label: "Rules", onClick: () => {} },
-                lobbyData &&
-                  lobbyData.banker !== playerId && {
-                    label: "Leave Lobby",
-                    onClick: handleClickLeave,
-                  },
-                lobbyData &&
-                  lobbyData.banker === playerId && {
-                    label: "Disband Lobby",
-                    onClick: handleClickDisband,
-                  },
-              ].filter(Boolean)}
-            />
-          </ThemeContext.Extend>
-        )}
-      </ToolbarContainer>
+                menu: {
+                  background: "bgDark",
+                },
+              }}>
+              <Menu
+                style={{ marginLeft: "auto" }}
+                label="Actions"
+                items={[
+                  { label: "Rules", onClick: () => {} },
+                  globalState.poll &&
+                    globalState.poll.banker !== globalState.playerId && {
+                      label: "Leave Lobby",
+                      onClick: handleClickLeave,
+                    },
+                  globalState.poll &&
+                    globalState.poll.banker === globalState.playerId && {
+                      label: "Disband Lobby",
+                      onClick: handleClickDisband,
+                    },
+                ].filter(Boolean)}
+              />
+            </ThemeContext.Extend>
+          )}
+        </ToolbarContainer>
 
-      <MasterBox pad="medium">
-        {/* Show the dice preloader when the page is loading */}
-        {isPageLoading && <Preloader />}
+        <MasterBox pad="medium">
+          {/* Show the dice preloader when the page is loading */}
+          {globalState.pageLoading && <Preloader />}
 
-        {/* If preflight is loaded, but player is not in a lobby */}
-        {preflightData && !playerId && <JoinView />}
+          {/* If preflight is loaded, but player is not in a lobby */}
+          {globalState.preflight && !globalState.playerId && <JoinView />}
 
-        {/* If preflight is loaded AND player ID is determined AND lobby data is loaded */}
-        {preflightData && playerId && lobbyData && <PlayView />}
+          {/* If preflight is loaded AND player ID is determined AND lobby data is loaded */}
+          {globalState.preflight &&
+            globalState.playerId &&
+            globalState.poll && <PlayView />}
 
-        {/* {JSON.stringify(lobbyData, null, 1)} */}
-      </MasterBox>
+          {/* {JSON.stringify(lobbyData, null, 1)} */}
+        </MasterBox>
 
-      {/* </Box> */}
-      {/* </AppLayout> */}
+        {/* </Box> */}
+        {/* </AppLayout> */}
+      </global.GlobalStateContext.Provider>
     </ModifiedGrommetBase>
   );
 }
