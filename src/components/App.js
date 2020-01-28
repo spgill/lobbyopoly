@@ -63,11 +63,17 @@ export default function App(props) {
 
       console.log("Preflight data:", resp);
 
-      if (resp.payload) {
+      // If there is no error, set the data and player id and leave
+      // the preloader going.
+      if (!resp.error) {
         preflightData.set(resp.payload);
         playerId.set(resp.payload.playerId);
       }
-      pageLoading.set(false);
+
+      // If there was an error, stop the preloader
+      else {
+        pageLoading.set(false);
+      }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -77,6 +83,12 @@ export default function App(props) {
     // Only poll if there is a player ID, else clear the data
     if (playerId.get()) {
       const pollData = await api.makeRequest("get", "/api/poll");
+
+      // If the lobby data is undefined, then this is the first poll, and
+      // we should turn off the preloader
+      if (lobbyData.get() === undefined) {
+        pageLoading.set(false);
+      }
 
       // If there is an error, that likely means that the lobby is gone
       // or that the player has been kicked. So go back to the home page.
@@ -178,11 +190,6 @@ export default function App(props) {
       <MasterBox pad="medium">
         {/* Show the dice preloader when the page is loading */}
         {pageLoading.get() && <Preloader />}
-
-        {/* Show quick loading screen while waiting on first poll to complete */}
-        {preflightData.get() && playerId.get() && !lobbyData.get() && (
-          <p style={{ textAlign: "center" }}>Loading...</p>
-        )}
 
         {/* If preflight is loaded, but player is not in a lobby */}
         {preflightData.get() && !playerId.get() && <JoinView />}
