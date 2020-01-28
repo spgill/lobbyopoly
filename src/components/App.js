@@ -8,13 +8,10 @@ import Preloader from "../components/Preloader";
 import { ToolbarContainer, ToolbarTitle } from "../components/Toolbar";
 import * as global from "../config/state";
 import appTheme from "../config/theme";
+import vars from "../config/vars";
 import * as api from "../util/api";
 import JoinView from "../views/JoinView";
 import PlayView from "../views/PlayView";
-
-// #region Constants
-const POLLING_INTERVAL = 1000 * 3; // 3 seconds
-// #endregion
 
 const ModifiedGrommetBase = styled(Grommet)`
   display: grid;
@@ -115,7 +112,7 @@ export default function App(props) {
     console.warn("Starting interval...");
     pollingInterval.current = window.setInterval(
       pollLobbyData,
-      POLLING_INTERVAL,
+      vars.POLLING_INTERVAL,
     );
 
     return () => {
