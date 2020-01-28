@@ -50,6 +50,7 @@ export default function App(props) {
     global.globalStateReducer,
     global.initialState,
   );
+  console.log("NEWSTATE", globalState);
 
   // Refs
   const pollingInterval = React.useRef(null);
@@ -96,7 +97,7 @@ export default function App(props) {
       // If there is an error, that likely means that the lobby is gone
       // or that the player has been kicked. So go back to the home page.
       if (pollData.error) {
-        globalDispatch({ type: global.GlobalStateAction.RETURN_HOME });
+        globalDispatch({ type: global.GlobalStateAction.RESET });
       }
 
       // If there's no error, update the lobby data
@@ -163,7 +164,7 @@ export default function App(props) {
 
     // Now clear all the state var to reset back to the welcome form
     if (!resp.error) {
-      globalDispatch({ type: global.GlobalStateAction.RETURN_HOME });
+      globalDispatch({ type: global.GlobalStateAction.RESET });
     }
   };
 
@@ -174,7 +175,7 @@ export default function App(props) {
 
     // Now clear all the state var to reset back to the welcome form
     if (!resp.error) {
-      globalDispatch({ type: global.GlobalStateAction.RETURN_HOME });
+      globalDispatch({ type: global.GlobalStateAction.RESET });
     }
   };
 

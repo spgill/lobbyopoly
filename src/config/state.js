@@ -18,7 +18,7 @@ export const GlobalStateContext = React.createContext(initialState);
 
 // Enum representing the possible action types on the global state
 export const GlobalStateAction = enumutil.createEnum({
-  RETURN_HOME: enumutil.auto(),
+  RESET: enumutil.auto(),
   PAGE_LOADING_START: enumutil.auto(),
   PAGE_LOADING_STOP: enumutil.auto(),
   PLAYER_ID_SET: enumutil.auto(),
@@ -30,11 +30,10 @@ export const GlobalStateAction = enumutil.createEnum({
 // Reducer for handling actions on the global state
 export function globalStateReducer(currentState, action) {
   switch (action.type) {
-    case GlobalStateAction.RETURN_HOME:
+    case GlobalStateAction.RESET:
       return {
         ...currentState,
-        preflight: initialState.preflight,
-        poll: initialState.poll,
+        playerId: initialState.playerId,
       };
 
     case GlobalStateAction.PAGE_LOADING_START:
