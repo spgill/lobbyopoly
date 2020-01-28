@@ -38,6 +38,10 @@ const LobbyInfoLine = styled(Text)`
     font-style: normal;
     color: ${props => props.theme.global.colors.text.dark};
   }
+
+  > u {
+    margin-left: 0.618ch;
+  }
 `;
 
 const MoneyBoxBalanceLine = styled.span`
@@ -204,7 +208,7 @@ export default function PlayView(props) {
         {isBanker && (
           <>
             <LobbyInfoLineSpacer />
-            {/* Expires: {console.warn("LOBBY", lobbyData.get().expires)} */}
+            Expires: <u>{globalState.poll.expires.fromNow()}</u>
           </>
         )}
       </LobbyInfoLine>

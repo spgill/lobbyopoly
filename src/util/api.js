@@ -1,11 +1,13 @@
 // Vendor imports
 import axios from "axios";
 import bufferpack from "bufferpack";
+import msgpack from "msgpack-lite";
+
+// DayJS and plugin imports
 import dayjs from "dayjs";
 import dayjsLocalPlugin from "dayjs/plugin/localizedFormat";
 import dayjsRelativePlugin from "dayjs/plugin/relativeTime";
 import dayjsUtcPlugin from "dayjs/plugin/utc";
-import msgpack from "msgpack-lite";
 
 // Incorporate dayjs plugins
 dayjs.extend(dayjsLocalPlugin);
@@ -17,9 +19,9 @@ const codec = msgpack.createCodec();
 
 // Decoder for dates, type 0x30
 codec.addExtUnpacker(0x30, buffer => {
-  // Unpack the
-  // return dayjs.utc(bufferpack.unpack("!d", buffer)[0] * 1000).local();
-  return null;
+  // Unpack the double from the buffer, times it by 1000 to conver to
+  // milliseconds, and parse it as a UTC timestamp, then convert to local time.
+  return dayjs.utc(bufferpack.unpack("!d", buffer)[0] * 1000).local();
 });
 
 export async function makeRequest(method, url, data) {
