@@ -35,7 +35,7 @@ export default function JoinView(props) {
   );
 
   // Local state vars
-  const [joinMode, setJoinMode] = React.useState(LobbyJoinMode.CREATE);
+  const [joinMode, setJoinMode] = React.useState(LobbyJoinMode.NONE);
   const [joinCode, setJoinCode] = React.useState("");
   const [joinName, setJoinName] = React.useState("");
   const [joinError, setJoinError] = React.useState(undefined);
