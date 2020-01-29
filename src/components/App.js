@@ -50,7 +50,12 @@ export default function App(props) {
     global.globalStateReducer,
     global.initialState,
   );
-  console.log("NEWSTATE", globalState);
+
+  // Memoize the reducer to keep it from triggering every update
+  const memoizedGlobalState = React.useMemo(
+    () => [globalState, globalDispatch],
+    [globalState, globalDispatch],
+  );
 
   // Refs
   const pollingInterval = React.useRef(null);
@@ -183,7 +188,7 @@ export default function App(props) {
     <ModifiedGrommetBase theme={appTheme}>
       <GlobalStyle />
 
-      <global.GlobalStateContext.Provider value={[globalState, globalDispatch]}>
+      <global.GlobalStateContext.Provider value={memoizedGlobalState}>
         <ToolbarContainer>
           <ToolbarTitle>Lobbyopoly</ToolbarTitle>
           {globalState.poll && (
