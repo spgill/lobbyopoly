@@ -10,6 +10,7 @@ export const initialState = {
   playerId: null,
   preflight: null,
   poll: null,
+  currentPlayer: {},
   events: [],
 };
 
@@ -52,7 +53,14 @@ export function globalStateReducer(currentState, action) {
         preflight: action.payload,
       };
     case GlobalStateAction.POLL_SET:
-      return { ...currentState, poll: action.payload };
+      return {
+        ...currentState,
+        poll: action.payload,
+        currentPlayer:
+          action.payload.players.filter(
+            ply => ply._id === currentState.playerId,
+          )[0] || {},
+      };
 
     case GlobalStateAction.EVENTS_SET:
       return { ...currentState, events: action.payload };

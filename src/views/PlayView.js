@@ -129,10 +129,6 @@ export default function PlayView(props) {
   // Global state reducer
   const [globalState] = React.useContext(global.GlobalStateContext);
 
-  const getPlayer = id => {
-    return globalState.poll.players.filter(ply => ply._id === id)[0];
-  };
-
   const formatEvent = event => {
     const eventText = globalState.preflight.bundleMap[event.key];
     return eventText === undefined
@@ -150,7 +146,9 @@ export default function PlayView(props) {
               switch (insertKind) {
                 // Player inserts should lookup and return player name
                 case "player":
-                  const ply = getPlayer(insertValue);
+                  const ply = globalState.poll.players.filter(
+                    ply => ply._id === insertValue,
+                  )[0];
                   return (
                     <u key={i}>{ply ? ply.name : <em>disconnected</em>}</u>
                   );
@@ -176,7 +174,6 @@ export default function PlayView(props) {
         });
   };
 
-  const playerData = getPlayer(globalState.playerId) || {};
   const isBanker = globalState.playerId === globalState.poll.banker;
 
   // List of "money boxes" representing the different balances
@@ -185,10 +182,10 @@ export default function PlayView(props) {
       icon: <PlayerAvatar playerId={globalState.playerId} size="4rem" />,
       title: (
         <>
-          {playerData.name} <em>(me)</em>
+          {globalState.currentPlayer.name} <em>(me)</em>
         </>
       ),
-      balance: playerData.balance,
+      balance: globalState.currentPlayer.balance,
       transferable: true,
     },
     {
