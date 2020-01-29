@@ -176,14 +176,19 @@ export default function PlayView(props) {
         });
   };
 
+  const playerData = getPlayer(globalState.playerId) || {};
   const isBanker = globalState.playerId === globalState.poll.banker;
 
   // List of "money boxes" representing the different balances
   const moneyBoxList = [
     {
       icon: <PlayerAvatar playerId={globalState.playerId} size="4rem" />,
-      title: "My funds",
-      balance: getPlayer(globalState.playerId).balance,
+      title: (
+        <>
+          {playerData.name} <em>(me)</em>
+        </>
+      ),
+      balance: playerData.balance,
       transferable: true,
     },
     {
