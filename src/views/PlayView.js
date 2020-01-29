@@ -9,6 +9,7 @@ import styled from "styled-components";
 import PlayerAvatar from "../components/PlayerAvatar";
 import VerticalSpacer from "../components/VerticalSpacer";
 import * as global from "../config/state";
+import useTransferLayer from "../layers/TransferLayer";
 import * as api from "../util/api";
 
 // Asset imports
@@ -129,6 +130,9 @@ export default function PlayView(props) {
   // Global state reducer
   const [globalState] = React.useContext(global.GlobalStateContext);
 
+  // Call transfer layer hook
+  const [startTransfer, transferLayerComponent] = useTransferLayer();
+
   const formatEvent = event => {
     const eventText = globalState.preflight.bundleMap[event.key];
     return eventText === undefined
@@ -196,6 +200,7 @@ export default function PlayView(props) {
       ),
       balance: globalState.currentPlayer.balance,
       transferable: true,
+      transferSource: globalState.preflight.transferEntityMap.SELF,
     },
     {
       icon: <BankIcon />,
@@ -204,20 +209,24 @@ export default function PlayView(props) {
         ? "∞"
         : globalState.poll.bank,
       transferable: isBanker,
+      transferSource: globalState.preflight.transferEntityMap.BANK,
     },
-    {
+    globalState.poll.options.freeParking && {
       icon: <FPIcon />,
       title: "Free Parking",
       balance: globalState.poll.freeParking,
       transferable: isBanker,
+      transferSource: globalState.preflight.transferEntityMap.FP,
     },
-  ];
+  ].filter(Boolean);
 
   return (
     <>
+      {/* Insert the rendered transfer layer */}
+      {transferLayerComponent}
+
       {/* Show the lobby code */}
       <LobbyInfoLine>
-        Lobby code: <em>{globalState.poll.code}</em>
         {isBanker && (
           <>
             Expires: <u>{globalState.poll.expires.fromNow()}</u>
@@ -240,7 +249,11 @@ export default function PlayView(props) {
               <code>{moneyBox.balance}</code>
             </MoneyBoxBalanceLine>
             {moneyBox.transferable ? (
-              <Button icon={<TransactionIcon />} plain={false} />
+              <Button
+                icon={<TransactionIcon />}
+                plain={false}
+                onClick={() => startTransfer(moneyBox.transferSource)}
+              />
             ) : (
               <MoneyBoxNoTransfer aria-hidden={true} />
             )}
