@@ -199,39 +199,38 @@ export default function App(props) {
       <global.GlobalStateContext.Provider value={memoizedGlobalState}>
         <ToolbarContainer>
           <ToolbarTitle>Lobbyopoly</ToolbarTitle>
-          {globalState.poll && (
-            <ThemeContext.Extend
-              value={{
-                global: {
-                  colors: {
-                    control: {
-                      light: "white",
-                    },
+
+          <ThemeContext.Extend
+            value={{
+              global: {
+                colors: {
+                  control: {
+                    light: "white",
                   },
                 },
-                menu: {
-                  background: "bgDark",
-                },
-              }}>
-              <Menu
-                style={{ marginLeft: "auto" }}
-                label="Actions"
-                items={[
-                  { label: "Rules", onClick: showRules },
-                  globalState.poll &&
-                    globalState.poll.banker !== globalState.playerId && {
-                      label: "Leave Lobby",
-                      onClick: handleClickLeave,
-                    },
-                  globalState.poll &&
-                    globalState.poll.banker === globalState.playerId && {
-                      label: "Disband Lobby",
-                      onClick: handleClickDisband,
-                    },
-                ].filter(Boolean)}
-              />
-            </ThemeContext.Extend>
-          )}
+              },
+              menu: {
+                background: "bgDark",
+              },
+            }}>
+            <Menu
+              style={{ marginLeft: "auto" }}
+              label="Actions"
+              items={[
+                { label: "Rules", onClick: showRules },
+                globalState.poll &&
+                  globalState.poll.banker !== globalState.playerId && {
+                    label: "Leave Lobby",
+                    onClick: handleClickLeave,
+                  },
+                globalState.poll &&
+                  globalState.poll.banker === globalState.playerId && {
+                    label: "Disband Lobby",
+                    onClick: handleClickDisband,
+                  },
+              ].filter(Boolean)}
+            />
+          </ThemeContext.Extend>
         </ToolbarContainer>
 
         <MasterBox pad="medium">
