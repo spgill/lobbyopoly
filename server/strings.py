@@ -18,6 +18,7 @@ class Bundle(enum.Enum):
     ERROR_TRANSFER_INVALID_SRC = "Invalid transfer source"
     ERROR_TRANSFER_FUNDS = "Insufficient funds"
     ERROR_TRANSFER_INVALID_DEST = "Invalid transfer destination"
+    ERROR_INVALID_OPTIONS = "Invalid game options"
 
     # Event strings
     EVENT_PLY_JOIN = "{0} joined the game. The Bank gave them {1} to get started."

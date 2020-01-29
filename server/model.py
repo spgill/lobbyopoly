@@ -33,6 +33,9 @@ class Lobby(mongo.Document):
     eventHash = mongo.StringField()
     disbanded = mongo.BooleanField()
 
+    # Dictionary of lobby options
+    options = mongo.DictField(default=dict())
+
     # Player information
     players = mongo.EmbeddedDocumentListField(Player)
 

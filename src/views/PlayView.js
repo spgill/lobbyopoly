@@ -191,7 +191,9 @@ export default function PlayView(props) {
     {
       icon: <BankIcon />,
       title: "The Bank",
-      balance: globalState.poll.bank,
+      balance: globalState.poll.options.unlimitedBank
+        ? "∞"
+        : globalState.poll.bank,
       transferable: isBanker,
     },
     {
@@ -224,7 +226,8 @@ export default function PlayView(props) {
             {moneyBox.icon}
             <h2>{moneyBox.title}</h2>
             <MoneyBoxBalanceLine aria-hidden={true}>
-              $<code>{moneyBox.balance}</code>
+              {globalState.poll.options.currency}
+              <code>{moneyBox.balance}</code>
             </MoneyBoxBalanceLine>
             {moneyBox.transferable ? (
               <Button icon={<TransactionIcon />} plain={false} />

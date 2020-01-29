@@ -18,9 +18,9 @@ const Number = styled.div`
   justify-content: center;
   align-items: center;
 
-  border-radius: 1rem;
-  width: 2rem;
-  height: 2rem;
+  border-radius: calc(${props => props.theme.checkBox.size} / 2);
+  width: ${props => props.theme.checkBox.size};
+  height: ${props => props.theme.checkBox.size};
 
   background: ${props => props.theme.global.colors["accent-1"]};
   color: ${props => props.theme.global.colors.text.light};
@@ -29,7 +29,8 @@ const Number = styled.div`
 const Body = styled.p`
   flex-grow: 1;
 
-  margin: 0.25rem 0 0 0.5rem;
+  /* margin: 0.25rem 0 0 0.5rem; */
+  margin: 0 0 0 calc(${props => props.theme.global.spacing} / 2);
 `;
 
 export default function BulletedInstruction(props) {

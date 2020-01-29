@@ -38,4 +38,10 @@ export default {
       radius: "4px",
     },
   },
+
+  formField: {
+    label: {
+      margin: "none",
+    },
+  },
 };
