@@ -65,6 +65,10 @@ def playerInsert(playerId):
     return ["player", playerId]
 
 
+def currencyInsert(amount):
+    return ["currency", amount]
+
+
 def randomCode(n=4):
     # "ACDEFGHKMNPQRTWXY34679"
     return "".join(random.sample("1234567890", n))
@@ -183,7 +187,9 @@ def createBlueprint():  # noqa: C901
 
             # Fetch the game options and verify them
             gameOptions = data.get("options", {})
-            if (gameOptionsError := verifyGameOptions(gameOptions)) is not None:
+            if (
+                gameOptionsError := verifyGameOptions(gameOptions)
+            ) is not None:
                 return helpers.composeError(gameOptionsError)
 
             # Now that we have a unique code, let's create a new lobby
@@ -208,7 +214,10 @@ def createBlueprint():  # noqa: C901
         # It's been found (or made), so let's create the player document
         # and attach it to the lobby. Also, subtract the player's starting
         # balance from the bank.
-        player = model.Player(name=data.get("name", "UNKNOWN"), balance=lobby.options["startingBalance"])
+        player = model.Player(
+            name=data.get("name", "UNKNOWN"),
+            balance=lobby.options["startingBalance"],
+        )
         lobby.players.append(player)
         lobby.bank -= player.balance
 
@@ -217,7 +226,7 @@ def createBlueprint():  # noqa: C901
             lobby=lobby,
             time=datetime.datetime.utcnow(),
             key=strings.Bundle.EVENT_PLY_JOIN,
-            inserts=[playerInsert(player.id), f"${player.balance}"],
+            inserts=[playerInsert(player.id), currencyInsert(player.balance)],
         )
         joinEvent.save()
 
@@ -361,7 +370,7 @@ def createBlueprint():  # noqa: C901
             key=strings.Bundle.EVENT_TRANSFER,
             inserts=[
                 playerInsert(player.id),
-                f"${amount}",
+                currencyInsert(amount),
                 sourceInsert,
                 destinationInsert,
             ],

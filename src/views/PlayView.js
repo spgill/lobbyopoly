@@ -161,6 +161,15 @@ export default function PlayView(props) {
                     </u>
                   );
 
+                // Currency bundles just need the right currency symbol
+                case "currency":
+                  return (
+                    <u key={i}>
+                      {globalState.poll.options.currency}
+                      {insertValue}
+                    </u>
+                  );
+
                 // Else, just try and jsonify the value
                 default:
                   return <u key={i}>{JSON.stringify(insertValue)}</u>;
