@@ -28,7 +28,6 @@ export default function useRulesLayer() {
     <ScrollLayer
       margin="large"
       responsive={true}
-      animation="fadeIn"
       full={false}
       modal={true}
       onClickOutside={closeHandler}
