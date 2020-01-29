@@ -35,6 +35,8 @@ export function globalStateReducer(currentState, action) {
       return {
         ...currentState,
         playerId: initialState.playerId,
+        poll: initialState.poll,
+        events: initialState.events,
       };
 
     case GlobalStateAction.PAGE_LOADING_START:
