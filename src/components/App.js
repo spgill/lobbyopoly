@@ -121,17 +121,19 @@ export default function App(props) {
 
   // Effect to start polling interval
   React.useEffect(() => {
-    console.warn("Starting interval...");
-    pollingInterval.current = window.setInterval(
-      pollLobbyData,
-      vars.POLLING_INTERVAL,
-    );
+    if (globalState.playerId) {
+      console.warn("Starting interval...");
+      pollingInterval.current = window.setInterval(
+        pollLobbyData,
+        vars.POLLING_INTERVAL,
+      );
 
-    return () => {
-      console.warn("Stopping interval...");
-      clearInterval(pollingInterval.current);
-    };
-  }, [pollLobbyData]);
+      return () => {
+        console.warn("Stopping interval...");
+        clearInterval(pollingInterval.current);
+      };
+    }
+  }, [globalState.playerId, pollLobbyData]);
 
   // Effect to immediately trigger a new poll when the playerId changes
   React.useEffect(() => {
