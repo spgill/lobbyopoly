@@ -211,12 +211,13 @@ export default function PlayView(props) {
         Lobby code: <em>{globalState.poll.code}</em>
         {isBanker && (
           <>
-            <LobbyInfoLineSpacer />
             Expires: <u>{globalState.poll.expires.fromNow()}</u>
           </>
         )}
+        <LobbyInfoLineSpacer />
+        Lobby code: <em>{globalState.poll.code}</em>
       </LobbyInfoLine>
-      <VerticalSpacer factor={0.618} />
+      <VerticalSpacer factor={0.382} />
 
       {/* Map and insert all the money boxes */}
       {moneyBoxList.map(moneyBox => (
