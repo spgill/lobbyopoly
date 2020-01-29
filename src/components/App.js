@@ -9,6 +9,7 @@ import { ToolbarContainer, ToolbarTitle } from "../components/Toolbar";
 import * as global from "../config/state";
 import appTheme from "../config/theme";
 import vars from "../config/vars";
+import useRulesLayer from "../layers/RulesLayer";
 import * as api from "../util/api";
 import JoinView from "../views/JoinView";
 import PlayView from "../views/PlayView";
@@ -186,9 +187,14 @@ export default function App(props) {
     }
   };
 
+  // Call hook for rules layer
+  const [showRules, rulesComponent] = useRulesLayer();
+
   return (
     <ModifiedGrommetBase theme={appTheme}>
       <GlobalStyle />
+
+      {rulesComponent}
 
       <global.GlobalStateContext.Provider value={memoizedGlobalState}>
         <ToolbarContainer>
@@ -211,7 +217,7 @@ export default function App(props) {
                 style={{ marginLeft: "auto" }}
                 label="Actions"
                 items={[
-                  { label: "Rules", onClick: () => {} },
+                  { label: "Rules", onClick: showRules },
                   globalState.poll &&
                     globalState.poll.banker !== globalState.playerId && {
                       label: "Leave Lobby",
