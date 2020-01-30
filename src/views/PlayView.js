@@ -1,5 +1,5 @@
 // Vendor imports
-import { Box, Button, Text, ThemeContext } from "grommet";
+import { Box, Button, Heading, Text, ThemeContext } from "grommet";
 import * as polished from "polished";
 import React from "react";
 import reactStringReplace from "react-string-replace";
@@ -243,7 +243,7 @@ export default function PlayView(props) {
           <MoneyBox pad="xsmall" elevation="small">
             {/* <img src={moneyBox.icon} alt="resource icon" /> */}
             {moneyBox.icon}
-            <h2>{moneyBox.title}</h2>
+            <Heading level={2}>{moneyBox.title}</Heading>
             <MoneyBoxBalanceLine aria-hidden={true}>
               {globalState.poll.options.currency}
               <code>{moneyBox.balance}</code>
