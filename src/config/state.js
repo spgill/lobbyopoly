@@ -57,6 +57,8 @@ export function globalStateReducer(currentState, action) {
     case GlobalStateAction.POLL_SET:
       return {
         ...currentState,
+        pageLoading:
+          currentState.poll === null ? false : currentState.pageLoading,
         poll: action.payload,
         currentPlayer:
           action.payload.players.filter(

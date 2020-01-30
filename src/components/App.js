@@ -5,7 +5,11 @@ import styled, { createGlobalStyle } from "styled-components";
 
 // Local imports
 import Preloader from "../components/Preloader";
-import { ToolbarContainer, ToolbarTitle } from "../components/Toolbar";
+import {
+  ToolbarContainer,
+  ToolbarRail,
+  ToolbarTitle,
+} from "../components/Toolbar";
 import * as global from "../config/state";
 import appTheme from "../config/theme";
 import vars from "../config/vars";
@@ -41,8 +45,7 @@ const MasterBox = styled(Box)`
 
   margin-right: auto;
   margin-left: auto;
-  /* width: calc(100vw - 1rem); */
-  width: 512px;
+  max-width: 512px;
 `;
 
 export default function App(props) {
@@ -114,8 +117,6 @@ export default function App(props) {
           payload: pollData.payload,
         });
       }
-
-      globalDispatch({ type: global.GlobalStateAction.PAGE_LOADING_STOP });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [globalState.playerId]);
@@ -198,39 +199,41 @@ export default function App(props) {
 
       <global.GlobalStateContext.Provider value={memoizedGlobalState}>
         <ToolbarContainer>
-          <ToolbarTitle>Lobbyopoly</ToolbarTitle>
+          <ToolbarRail>
+            <ToolbarTitle>Lobbyopoly</ToolbarTitle>
 
-          <ThemeContext.Extend
-            value={{
-              global: {
-                colors: {
-                  control: {
-                    light: "white",
+            <ThemeContext.Extend
+              value={{
+                global: {
+                  colors: {
+                    control: {
+                      light: "white",
+                    },
                   },
                 },
-              },
-              menu: {
-                background: "bgDark",
-              },
-            }}>
-            <Menu
-              style={{ marginLeft: "auto" }}
-              label="Actions"
-              items={[
-                { label: "Rules", onClick: showRules },
-                globalState.poll &&
-                  globalState.poll.banker !== globalState.playerId && {
-                    label: "Leave Lobby",
-                    onClick: handleClickLeave,
-                  },
-                globalState.poll &&
-                  globalState.poll.banker === globalState.playerId && {
-                    label: "Disband Lobby",
-                    onClick: handleClickDisband,
-                  },
-              ].filter(Boolean)}
-            />
-          </ThemeContext.Extend>
+                menu: {
+                  background: "bgDark",
+                },
+              }}>
+              <Menu
+                style={{ marginLeft: "auto" }}
+                label="Actions"
+                items={[
+                  { label: "Rules", onClick: showRules },
+                  globalState.poll &&
+                    globalState.poll.banker !== globalState.playerId && {
+                      label: "Leave Lobby",
+                      onClick: handleClickLeave,
+                    },
+                  globalState.poll &&
+                    globalState.poll.banker === globalState.playerId && {
+                      label: "Disband Lobby",
+                      onClick: handleClickDisband,
+                    },
+                ].filter(Boolean)}
+              />
+            </ThemeContext.Extend>
+          </ToolbarRail>
         </ToolbarContainer>
 
         <MasterBox pad="medium">
