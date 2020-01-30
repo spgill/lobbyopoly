@@ -36,6 +36,7 @@ export function globalStateReducer(currentState, action) {
         ...currentState,
         playerId: initialState.playerId,
         poll: initialState.poll,
+        currentPlayer: initialState.currentPlayer,
         events: initialState.events,
       };
 
