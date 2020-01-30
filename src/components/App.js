@@ -45,6 +45,7 @@ const MasterBox = styled(Box)`
 
   margin-right: auto;
   margin-left: auto;
+  width: 100vw;
   max-width: 512px;
 `;
 
