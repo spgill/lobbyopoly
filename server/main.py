@@ -20,6 +20,11 @@ from werkzeug.debug import DebuggedApplication
 import api
 
 
+# Define the static directory in relation to this file
+staticDir = (pathlib.Path(__file__).parent / ".." / "build").resolve()
+staticUrl = "/build"
+
+
 # No-op function decorator
 def noop(func):
     return func
@@ -27,7 +32,9 @@ def noop(func):
 
 # Initialize and configure the flask app
 def createApp():
-    app = flask.Flask(__name__, static_folder=None)
+    app = flask.Flask(
+        __name__, static_url_path=staticUrl, static_folder=staticDir
+    )
     app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024  # 2 megabytes, fyi
     app.config["DEBUG"] = os.environ.get("FLASK_DEBUG", "").lower() == "true"
     app.config["SECRET_KEY"] = os.environ.get("FLASK_SECRET_KEY", "password")
@@ -51,13 +58,8 @@ def createApp():
     # Any route that doesn't go to an actual file will return the index
     @app.route("/", defaults={"path": ""})
     @app.route("/<path:path>")
-    def route_index_wildcard(path):
-        filepath = pathlib.Path(flask.safe_join("../build", path))
-        if filepath.exists() and filepath.is_file():
-            return flask.send_file(str(filepath))
-        elif filepath.suffix:
-            return flask.abort(404)
-        return flask.send_file("../build/index.html")
+    def route_catchall(path):
+        return app.send_static_file("index.html")
 
     # Finally, return the app
     return app
