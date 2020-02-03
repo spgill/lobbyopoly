@@ -71,8 +71,6 @@ export default function App(props) {
     (async function() {
       const resp = await api.makeRequest("get", "/api/preflight");
 
-      console.log("Preflight data:", resp);
-
       // If there is no error, set the data and player id and leave
       // the preloader going.
       if (!resp.error) {
@@ -112,7 +110,6 @@ export default function App(props) {
 
       // If there's no error, update the lobby data
       else {
-        console.log("LATEST POLL", pollData.payload);
         globalDispatch({
           type: global.GlobalStateAction.POLL_SET,
           payload: pollData.payload,
@@ -158,7 +155,6 @@ export default function App(props) {
           type: global.GlobalStateAction.EVENTS_SET,
           payload: events.payload,
         });
-        console.log("EVENTS", events.payload);
 
         // Update the ref'd event hash
         eventHash.current = globalState.poll.eventHash;

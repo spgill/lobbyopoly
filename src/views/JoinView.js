@@ -56,12 +56,6 @@ export default function JoinView(props) {
     setJoinError(undefined);
     globalDispatch({ type: global.GlobalStateAction.PAGE_LOADING_START });
 
-    console.warn("JOINDATA", {
-      code: joinMode === LobbyJoinMode.JOIN ? joinCode : undefined,
-      name: joinName,
-      options: gameOptions,
-    });
-
     // Hit the API to join/create lobby
     const resp = await api.makeRequest("post", "/api/join", {
       code: joinMode === LobbyJoinMode.JOIN ? joinCode : undefined,
