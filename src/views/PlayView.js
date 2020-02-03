@@ -10,7 +10,6 @@ import PlayerAvatar from "../components/PlayerAvatar";
 import VerticalSpacer from "../components/VerticalSpacer";
 import * as global from "../config/state";
 import useTransferLayer from "../layers/TransferLayer";
-import * as api from "../util/api";
 
 // Asset imports
 import { ReactComponent as BankIcon } from "../assets/icons/noun_Piggy Bank_2342153.svg";
