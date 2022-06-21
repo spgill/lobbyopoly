@@ -1,3 +1,3 @@
 #! /bin/sh
 
-hypercorn server:app --bind 0.0.0.0:${PORT} "$@"
+hypercorn server:app --bind 0.0.0.0:5000 "$@"
