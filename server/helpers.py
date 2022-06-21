@@ -2,12 +2,12 @@
 import datetime
 import gzip
 import struct
+import typing
 
 # vendor imports
 from bson.objectid import ObjectId
-import flask
+import fastapi
 import msgpack
-import werkzeug
 
 # local imports
 
@@ -22,7 +22,8 @@ def _customEncoder(obj):
         return msgpack.ExtType(
             0x30,
             struct.pack(
-                "!d", obj.replace(tzinfo=datetime.timezone.utc).timestamp(),
+                "!d",
+                obj.replace(tzinfo=datetime.timezone.utc).timestamp(),
             ),
         )
     return obj
@@ -40,14 +41,13 @@ def unpackMessage(payload):
     )
 
 
-def parseRequestData():
-    if flask.request.headers.get("content-type", "") != "application/msgpack":
-        raise werkzeug.exceptions.HTTPException(
-            response=flask.make_response(
-                ("Invalid Content-Type of request body", 400, {})
-            )
+async def parseRequestData(request: fastapi.Request) -> dict:
+    if request.headers.get("content-type", "") != "application/msgpack":
+        raise fastapi.HTTPException(
+            status_code=400,
+            detail="Expected body Content-Type to be 'application/msgpack'",
         )
-    return unpackMessage(flask.request.data)
+    return unpackMessage(await request.body())
 
 
 # Default headers used for responses
@@ -59,16 +59,7 @@ def composeResponse(data=None, error=None):
     headers = {}
     headers.update(defaultHeaders)
 
-    # Compress payload in gzip if allowed by client
-    if (
-        "gzip" in flask.request.headers.get("accept-encoding", "")
-        and len(payload) >= 256
-    ):
-        headers["content-encoding"] = "gzip"
-        headers["unencoded-length"] = str(len(payload))
-        payload = gzip.compress(payload, 5)
-
-    return flask.make_response(payload, 200, headers)
+    return fastapi.Response(payload, 200, headers)
 
 
 def composeError(error):

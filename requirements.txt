@@ -1,6 +1,6 @@
-click
-flask
-flask-mongoengine
+fastapi
 gevent
+hypercorn
 mongoengine
 msgpack
+typer
