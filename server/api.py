@@ -336,16 +336,22 @@ def createBlueprint():  # noqa: C901
             lobby.freeParking -= amount
 
         # Next, add the amount to the credited party
-        if destination is strings.TransferEntity.SELF:
-            player.balance += amount
-        elif destination is strings.TransferEntity.BANK:
-            lobby.bank += amount
-        elif destination is strings.TransferEntity.FP:
-            lobby.freeParking += amount
+        destinationInsert = None
+        if isinstance(destination, strings.TransferEntity):
+            destinationInsert = bundleInsert(
+                transferEntityStrings[destination]
+            )
+            if destination is strings.TransferEntity.SELF:
+                player.balance += amount
+            elif destination is strings.TransferEntity.BANK:
+                lobby.bank += amount
+            elif destination is strings.TransferEntity.FP:
+                lobby.freeParking += amount
         else:
             try:
                 destinationPlayer = lobby.players.get(id=destination)
                 destinationPlayer.balance += amount
+                destinationInsert = playerInsert(destinationPlayer.id)
             except mongoengine.DoesNotExist:
                 return helpers.composeError(
                     strings.Bundle.ERROR_TRANSFER_INVALID_DEST
@@ -356,12 +362,6 @@ def createBlueprint():  # noqa: C901
         print(dir(player))
 
         sourceInsert = bundleInsert(transferEntityStrings[source])
-
-        destinationInsert = (
-            bundleInsert(transferEntityStrings[destination])
-            if isinstance(destination, strings.TransferEntity)
-            else playerInsert(destination)
-        )
 
         # Almost there, we just gotta log the transfer
         event = model.Event(
