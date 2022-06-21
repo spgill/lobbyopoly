@@ -5,6 +5,7 @@
   "dependencies": {
     "@ibm/plex": "^6.0.2",
     "axios": "^0.27.2",
+    "buffer": "^6.0.3",
     "bufferpack": "0.0.6",
     "dayjs": "^1.11.3",
     "eslint-plugin-prettier": "^4.0.0",

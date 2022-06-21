@@ -2,6 +2,7 @@
 import axios from "axios";
 import bufferpack from "bufferpack";
 import msgpack from "msgpack-lite";
+import { Buffer } from 'buffer';
 
 // DayJS and plugin imports
 import dayjs from "dayjs";
