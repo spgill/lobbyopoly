@@ -1,15 +1,11 @@
 # stdlib imports
 import datetime
-import gzip
 import struct
-import typing
 
 # vendor imports
 from bson.objectid import ObjectId
 import fastapi
 import msgpack
-
-# local imports
 
 
 def _customEncoder(obj):
