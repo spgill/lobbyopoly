@@ -1,6 +1,6 @@
 fastapi
-gevent
 hypercorn
+itsdangerous
 mongoengine
 msgpack
 typer
