@@ -12,7 +12,11 @@
     "titleBar.inactiveForeground": "#e7e7e799",
     "statusBar.background": "#e1403e",
     "statusBarItem.hoverBackground": "#e86c6a",
-    "statusBar.foreground": "#e7e7e7"
+    "statusBar.foreground": "#e7e7e7",
+    "activityBar.activeBackground": "#e86c6a",
+    "sash.hoverBorder": "#e86c6a",
+    "statusBarItem.remoteBackground": "#e1403e",
+    "statusBarItem.remoteForeground": "#e7e7e7"
   },
 
   "editor.tabSize": 2,
@@ -24,5 +28,6 @@
   "[python]": {
     "editor.tabSize": 4
   },
-  "peacock.color": "#e1403e"
+  "peacock.color": "#e1403e",
+  "peacock.remoteColor": "#e1403e"
 }
