@@ -16,11 +16,11 @@
     "activityBar.activeBackground": "#e86c6a",
     "sash.hoverBorder": "#e86c6a",
     "statusBarItem.remoteBackground": "#e1403e",
-    "statusBarItem.remoteForeground": "#e7e7e7"
+    "statusBarItem.remoteForeground": "#e7e7e7",
+    "commandCenter.border": "#e7e7e799"
   },
 
   "editor.tabSize": 2,
-  "editor.formatOnSave": true,
   "editor.detectIndentation": false,
   "javascript.validate.enable": false,
   "python.formatting.provider": "black",
@@ -29,5 +29,13 @@
     "editor.tabSize": 4
   },
   "peacock.color": "#e1403e",
-  "peacock.remoteColor": "#e1403e"
+  "peacock.remoteColor": "#e1403e",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": true
+  },
+  "eslint.validate": ["javascript"],
+  "python.analysis.typeCheckingMode": "basic",
+  "python.linting.flake8Enabled": true,
+  "python.linting.enabled": true
 }
