@@ -30,4 +30,4 @@ ENV MONGODB_HOST=""
 EXPOSE 5000/tcp
 
 # Command to start server
-CMD ["/bin/bash", "start-server.sh"]
+CMD ["honcho", "start", "web"]

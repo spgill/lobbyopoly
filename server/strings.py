@@ -4,12 +4,13 @@ import enum
 
 class Bundle(enum.Enum):
     # Error strings
+    ERROR_UNKNOWN = "An unknown server error has occurred"
     ERROR_BANKER_CANNOT_LEAVE = "You are the Banker. You cannot leave."
-    ERROR_KICK_NOT_FOUND = "Target player not found"
     ERROR_KICK_YOURSELF = "You cannot kick yourself"
     ERROR_PLY_NAME_BLACKLIST = "That player name is not allowed"
     ERROR_PLY_NOT_ACTIVE = "You are no longer part of this lobby"
     ERROR_PLY_NOT_BANKER = "You are not the Banker!"
+    ERROR_PLY_NOT_FOUND = "Player not found"
     ERROR_LOBBY_CODE_INVALID = "Lobby with this code does not exist"
     ERROR_LOBBY_FULL = "This lobby is full"
     ERROR_LOBBY_EXPIRED = "This lobby has expired"

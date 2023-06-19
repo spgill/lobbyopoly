@@ -1,5 +1,5 @@
 // Vendor imports
-import React from "react";
+import React, { PropsWithChildren } from "react";
 import styled from "styled-components";
 
 const Container = styled.div`
@@ -33,11 +33,11 @@ const Body = styled.p`
   margin: 0 0 0 calc(${props => props.theme.global.spacing} / 2);
 `;
 
-export default function BulletedInstruction(props) {
+export default function BulletedInstruction({n, children}: PropsWithChildren<any>) {
   return (
     <Container>
-      <Number>{props.n}</Number>
-      <Body>{props.children}</Body>
+      <Number>{n}</Number>
+      <Body>{children}</Body>
     </Container>
   );
 }

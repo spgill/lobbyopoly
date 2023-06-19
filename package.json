@@ -1,45 +1,113 @@
 {
   "name": "lobbyopoly",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@ibm/plex": "^6.0.2",
-    "axios": "^0.27.2",
+    "@ibm/plex": "^6.3.0",
+    "@types/node": "^20.3.1",
+    "@types/react": "^18.2.12",
+    "@types/react-dom": "^18.2.5",
+    "axios": "^1.4.0",
     "buffer": "^6.0.3",
-    "bufferpack": "0.0.6",
-    "dayjs": "^1.11.3",
-    "eslint-plugin-prettier": "^4.0.0",
-    "grommet": "^2.24.0",
-    "grommet-icons": "^4.7.0",
+    "dayjs": "^1.11.8",
+    "grommet": "^2.32.2",
+    "grommet-icons": "^4.11.0",
     "msgpack-lite": "^0.1.26",
     "polished": "^4.2.2",
-    "prettier": "^2.7.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "^5.0.1",
-    "react-string-replace": "^1.1.0",
-    "styled-components": "^5.3.5"
+    "react-string-replace": "^1.1.1",
+    "react-use-websocket": "^4.3.1",
+    "styled-components": "^5.3.11",
+    "typescript": "^4",
+    "usehooks-ts": "^2.9.1",
+    "web-vitals": "^3.3.2"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "HOST=0.0.0.0 react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test --env=jsdom",
+    "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
-    "extends": [
-      "react-app"
-    ],
+    "env": {
+      "browser": true,
+      "es2021": true
+    },
     "plugins": [
+      "react",
+      "react-hooks",
+      "@typescript-eslint",
       "prettier"
+    ],
+    "extends": [
+      "react-app",
+      "airbnb",
+      "airbnb-typescript",
+      "plugin:@typescript-eslint/recommended",
+      "prettier"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+      "project": "./tsconfig.json"
+    },
+    "settings": {
+      "import/resolver": {
+        "typescript": {}
+      }
+    },
+    "rules": {
+      "react/require-default-props": 0,
+      "import/prefer-default-export": [
+        0
+      ],
+      "no-underscore-dangle": [
+        0
+      ],
+      "react/prop-types": [
+        0
+      ],
+      "react/jsx-filename-extension": [
+        1,
+        {
+          "extensions": [
+            ".tsx",
+            ".jsx"
+          ]
+        }
+      ]
+    }
+  },
+  "prettier": {
+    "semi": true,
+    "trailingComma": "all",
+    "singleQuote": true,
+    "printWidth": 80
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
     ]
   },
-  "proxy": "http://0.0.0.0:5000",
-  "browserslist": [
-    ">= 2%",
-    "not dead",
-    "not IE >= 0",
-    "not op_mini all"
-  ],
-  "homepage": "/build"
+  "devDependencies": {
+    "@types/msgpack-lite": "^0.1.8",
+    "@types/styled-components": "^5.1.26",
+    "@typescript-eslint/parser": "^5.59.11",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-config-airbnb-typescript": "^17.0.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-import-resolver-typescript": "^3.5.5",
+    "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "http-proxy-middleware": "^2.0.6",
+    "prettier": "^2.8.8"
+  }
 }

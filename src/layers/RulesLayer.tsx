@@ -1,8 +1,10 @@
+/* eslint-disable react/no-unescaped-entities */
+/* eslint react/no-unescaped-entities: [1] */
 // Vendor imports
-import { Box, Button, Layer } from "grommet";
-import { FormClose } from "grommet-icons";
-import React from "react";
-import styled from "styled-components";
+import { Box, Button, Layer } from 'grommet';
+import { FormClose } from 'grommet-icons';
+import React from 'react';
+import styled from 'styled-components';
 
 const ScrollLayer = styled(Layer)`
   overflow-y: auto;
@@ -27,19 +29,15 @@ export default function useRulesLayer() {
   const rendered = isOpen && (
     <ScrollLayer
       margin="large"
-      responsive={true}
+      responsive
       full={false}
-      modal={true}
+      modal
       onClickOutside={closeHandler}
-      onEsc={closeHandler}>
+      onEsc={closeHandler}
+    >
       <RulesBox pad="medium">
-        <Button
-          icon={<FormClose />}
-          primary={true}
-          plain={true}
-          onClick={closeHandler}
-        />
-        <h1>Official Rules</h1>
+        <Button icon={<FormClose />} primary plain onClick={closeHandler} />
+        <h1>Official Game Rules</h1>
         <p>
           The following are the rules as printed in the official Monopoly® rule
           Book, with annotations explaining how play works when playing with

@@ -2,7 +2,7 @@
 import React from "react";
 import styled from "styled-components";
 
-const PreloaderDot = styled.div`
+const PreloaderDot = styled.div<{show: boolean;}>`
   transition: opacity 100ms;
 
   border-radius: 10px;
@@ -48,7 +48,7 @@ const dotPatterns = [
 export default function Preloader() {
   const [dieValue, setDieValue] = React.useState(0);
 
-  const timeoutId = React.useRef(undefined);
+  const timeoutId = React.useRef<NodeJS.Timeout | undefined>(undefined);
 
   const incrementValue = React.useCallback(() => {
     setDieValue((dieValue + 1) % 6);
@@ -63,9 +63,9 @@ export default function Preloader() {
   React.useEffect(() => () => clearTimeout(timeoutId.current), [timeoutId]);
 
   return (
-    <PreloaderDie aria-hidden={true}>
+    <PreloaderDie aria-hidden>
       {dotPatterns[dieValue].map((value, i) => (
-        <PreloaderDot key={i} show={value} />
+        <PreloaderDot key={`${dieValue}_${i.toString()}`} show={!!value} />
       ))}
     </PreloaderDie>
   );
