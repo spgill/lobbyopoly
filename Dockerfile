@@ -1,7 +1,12 @@
-FROM python:3.10-slim-bullseye
+FROM python:3.11-slim-bookworm
 SHELL ["/bin/bash", "-c"]
 
-# Copy source code over from current dir
+# Add Tini
+ENV TINI_VERSION v0.19.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+
+# Copy source into image
 COPY . /tmp/lobbyopoly
 WORKDIR /tmp/lobbyopoly
 
@@ -25,9 +30,10 @@ RUN pip install -r requirements.txt
 
 # Environment vars
 ENV MONGODB_HOST=""
+ENV SESSION_SECRET_KEY="42"
 
 # Default TCP port
 EXPOSE 5000/tcp
 
-# Command to start server
-CMD ["honcho", "start", "web"]
+# Run the server
+ENTRYPOINT ["/tini", "-v", "--", "./docker-entrypoint.sh"]
