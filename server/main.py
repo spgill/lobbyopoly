@@ -29,11 +29,6 @@ app.add_middleware(
     SessionMiddleware, secret_key=os.environ.get("SESSION_SECRET_KEY", "42")
 )
 
-# Mount static file server for UI build
-staticDir = (pathlib.Path(__file__).parent / ".." / "build").resolve()
-staticUrl = "/build"
-app.mount(staticUrl, StaticFiles(directory=staticDir), "static")
-
 # Attach the API routes
 app.include_router(apiRouter)
 app.include_router(socketRouter)
@@ -42,4 +37,10 @@ app.include_router(socketRouter)
 # Default route redirect to build
 @app.get("/")
 def app_default():
-    return RedirectResponse("/build/index.html")
+    return RedirectResponse("/index.html")
+
+
+# Mount static file server for UI build
+staticDir = (pathlib.Path(__file__).parent / ".." / "build").resolve()
+staticUrl = "/"
+app.mount(staticUrl, StaticFiles(directory=staticDir), "static")
