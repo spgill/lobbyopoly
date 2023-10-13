@@ -57,10 +57,27 @@ export interface Lobby {
   players: Player[];
 }
 
-export interface WSEventMessage {
-  lobby: Lobby;
-  events: Event[];
+// #region WebSocket message types
+export enum WSMessageType {
+  Kick = 'kick',
+  Update = 'update',
 }
+
+export interface WSKickMessage {
+  type: WSMessageType.Kick;
+  player: ObjectId | null;
+}
+export interface WSUpdateMessage {
+  type: WSMessageType.Update;
+  payload: {
+    lobby: Lobby;
+    events: Event[];
+  };
+}
+
+export type WSMessage = WSKickMessage | WSUpdateMessage;
+
+// #endregion
 
 // OLD TYPINGS BELOW
 

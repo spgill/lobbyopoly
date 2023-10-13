@@ -1,22 +1,22 @@
 // Vendor imports
-import { Box, Button, Heading, Text, ThemeContext, Spinner } from 'grommet';
+import { Box, Button, Text, ThemeContext, Spinner } from 'grommet';
 import * as polished from 'polished';
-import React, { useCallback, useMemo } from 'react';
+import React, { PropsWithChildren, useCallback, useMemo } from 'react';
 import reactStringReplace from 'react-string-replace';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import { Send } from 'grommet-icons';
+import dayjs from 'dayjs';
 
 // Local imports
-import PlayerAvatar from '../components/PlayerAvatar';
+import PlayerAvatar, { EntityAvatar } from '../components/Avatars';
 import VerticalSpacer from '../components/VerticalSpacer';
 import { GlobalStateContext } from '../utils/state';
 import useTransferLayer from '../layers/TransferLayer';
 import { Event } from '../api/APITypes';
 
 // Asset imports
-import { ReactComponent as BankIcon } from '../assets/icons/noun_Piggy Bank_2342153.svg';
-import { ReactComponent as FPIcon } from '../assets/icons/noun_Parking_451846.svg';
-import { ReactComponent as TransactionIcon } from '../assets/icons/noun_transaction_763895.svg';
+import { ReactComponent as BankIcon } from '../assets/icons/noun-bank-1010504.svg';
+import { ReactComponent as FPIcon } from '../assets/icons/noun-parking-2884387.svg';
 
 const LobbyInfoLineSpacer = styled.span`
   flex-grow: 1;
@@ -46,34 +46,111 @@ const LobbyInfoLine = styled(Text)`
   }
 `;
 
-const MoneyBoxBalanceLine = styled.span`
-  grid-column: 1 / span 2;
+const LogBoxInnerContainer = styled.div`
+  overflow-x: auto;
 
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  align-items: flex-start;
+  mask-image: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 1) 85%,
+    rgba(0, 0, 0, 0)
+  );
 
-  margin-top: 0.618rem;
+  > ul {
+    margin-top: calc(${(props) => props.theme.global.spacing} / 6);
+    margin-bottom: calc(${(props) => props.theme.global.spacing} / 2);
+    padding-left: calc(${(props) => props.theme.global.spacing} * 0.8);
 
-  font-size: 1.382rem;
-
-  > code {
-    flex-grow: 1;
-
-    border-bottom: 1px dashed ${(props) => props.theme.global.colors.text.light};
-    margin-left: calc(${(props) => props.theme.global.spacing} / 2 - 0.25rem);
-    padding: 0.25rem;
-
-    background: rgba(255, 255, 255, 0.5);
-
-    font-size: 2rem;
+    font-size: 1rem;
+    list-style-type: square;
   }
 `;
 
-const MoneyBoxNoTransfer = styled.div`
+const LogBox = styled(Box)`
+  border: 1px solid ${polished.darken(0.1, '#e87024')};
+  border-radius: 2px;
+  max-height: 40vh;
+
+  background: #e87024;
+`;
+
+const CenteredSpinner = styled(Spinner)`
+  margin: ${(props) => props.theme.global.spacing} auto;
+`;
+
+// Styles shared between all the cards
+const SharedCardStyles = styled(Box)`
+  border: 1px solid ${polished.darken(0.1, '#cae8e0')};
+  border-radius: 2px;
+  margin-bottom: calc(${(props) => props.theme.global.spacing} / 2);
+`;
+
+SharedCardStyles.defaultProps = {
+  pad: 'small',
+  elevation: 'small',
+};
+
+const MoneyCardContainer = styled(SharedCardStyles)`
+  display: grid;
+
+  grid-template:
+    min-content / 3rem auto minmax(auto, min-content)
+    2rem;
+  grid-gap: calc(${(props) => props.theme.global.spacing} / 4);
+  grid-column-gap: calc(${(props) => props.theme.global.spacing} / 2);
+  justify-items: left;
+  align-items: center;
+
+  background: #cae8e0;
+
+  > h3 {
+    margin: 0;
+  }
+`;
+
+const PlayerNameContainer = styled.div`
+  display: flex;
+  flex-direction: row;
+
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+`;
+
+const PlayerNameLabel = styled.label`
+  white-space: nowrap;
+  overflow-x: hidden;
+  text-overflow: ellipsis;
+  overflow-y: hidden;
+
+  font-size: 1.25rem;
+  font-weight: 600;
+  /* mask-image: linear-gradient(to right, rgba(0, 0, 0, 1) 85%, rgba(0, 0, 0, 0)); */
+`;
+
+const DottedSpacer = styled.hr`
+  flex-grow: 1;
+
+  border: 0;
+  border-top: 4px dotted
+    ${(props) => polished.lighten(0.382, props.theme.global.colors.text.light)};
+  margin-left: calc(${(props) => props.theme.global.spacing} / 2);
+  /* width: calc(100% - ${(props) => props.theme.global.spacing} / 2); */
+  /* min-width: 1rem; */
+`;
+
+function PlayerName({ children }: { children: string }): JSX.Element {
+  return (
+    <PlayerNameContainer>
+      <PlayerNameLabel title={children}>{children}</PlayerNameLabel>
+      <DottedSpacer />
+    </PlayerNameContainer>
+  );
+}
+
+const NoTransferDot = styled.div`
   border-radius: 0.5rem;
-  margin: 0.618rem 0.5rem 0;
+  /* margin: 0.618rem 0.5rem 0; */
+  margin: 0.5rem;
   width: 1rem;
   height: 1rem;
 
@@ -81,55 +158,238 @@ const MoneyBoxNoTransfer = styled.div`
     polished.darken(0.1, props.theme.global.colors.monopolyPaleGreen)};
 `;
 
-const MoneyBox = styled(Box)`
-  display: grid;
-  grid-template: 4rem auto auto / 4rem auto 2rem;
-  grid-column-gap: calc(${(props) => props.theme.global.spacing} / 4);
+const TransferButton = styled(Button)`
+  width: 2rem;
+  height: 2rem;
+`;
+
+const BalanceBox = styled.div<{ currency: string; plain?: boolean }>`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
   align-items: center;
 
-  border: 1px solid ${polished.darken(0.1, '#cae8e0')};
-  border-radius: 2px;
+  box-sizing: border-box;
+  position: relative;
 
-  background: #cae8e0;
+  font-size: 1.25rem;
+  padding: calc(${(props) => props.theme.global.spacing} / 6);
+  font-family: 'IBM Plex Mono', monospace;
 
-  > svg {
-    fill: ${(props) => props.theme.global.colors.brandAlt};
-  }
+  padding-left: 0.618em;
 
-  > h2 {
-    grid-column: 2 / span 2;
+  ${(props) =>
+    props.plain &&
+    css`
+      background: transparent;
+      border-bottom: none;
+    `}
 
-    margin: 0;
-  }
+  ::before {
+    display: block;
+    content: '${(props) => props.currency}';
 
-  > button {
-    margin-top: 0.618rem;
-    padding: 2px;
+    font-size: 0.618em;
 
-    fill: ${(props) => props.theme.global.colors.text.light};
-  }
-`;
-
-const LogBox = styled(Box)`
-  border: 1px solid ${polished.darken(0.1, '#e87024')};
-  border-radius: 2px;
-
-  background: #e87024;
-
-  > h4 {
-    margin: 0;
-  }
-
-  > ul {
-    margin-top: calc(${(props) => props.theme.global.spacing} / 2);
-    margin-bottom: calc(${(props) => props.theme.global.spacing} / 2);
-    padding-left: calc(${(props) => props.theme.global.spacing} * 0.8);
+    position: absolute;
+    top: 0;
+    left: 2px;
   }
 `;
 
-const CenteredSpinner = styled(Spinner)`
-  margin: ${(props) => props.theme.global.spacing} auto;
+interface BalanceLineProps {
+  icon: JSX.Element;
+  name: string;
+  balance: number;
+  isTransferable: boolean;
+  onTransfer?: (entity: string) => void;
+  transferEntity?: string;
+}
+
+/** This component is a single line with a player/entity card */
+function BalanceLine({
+  icon,
+  name,
+  balance,
+  isTransferable,
+  onTransfer,
+  transferEntity,
+}: BalanceLineProps): JSX.Element {
+  const globalState = React.useContext(GlobalStateContext);
+
+  const onClickTransfer = useCallback(
+    () => onTransfer?.(transferEntity ?? ''),
+    [onTransfer, transferEntity],
+  );
+
+  return (
+    <>
+      {icon}
+      <PlayerName>{name}</PlayerName>
+      {/* <DottedSpacer /> */}
+      <BalanceBox currency={globalState?.lobby?.options.currency ?? ''}>
+        {balance === Infinity ? '∞' : balance.toString()}
+      </BalanceBox>
+      {isTransferable ? (
+        <TransferButton
+          pad="none"
+          icon={<Send />}
+          plain={false}
+          onClick={onClickTransfer}
+        />
+      ) : (
+        <NoTransferDot />
+      )}
+    </>
+  );
+}
+
+const SeparatorRow = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+
+  margin-bottom: 2px;
+  width: 100%;
+  text-align: center;
+  color: ${(props) => props.theme.global.colors.text.light};
+  font-family: 'IBM Plex Serif', serif;
+  font-size: 0.8rem;
+  line-height: 1em;
+
+  > hr {
+    flex-grow: 1;
+    border: 0;
+    border-top: 1px solid ${(props) => props.theme.global.colors.text.light};
+    margin: 0 calc(${(props) => props.theme.global.spacing} / 2);
+    margin-top: 2px;
+  }
 `;
+
+const GridAlignedSeparatorRow = styled(SeparatorRow)<{ spacing?: boolean }>`
+  grid-column: 1 / span 4;
+
+  ${(props) =>
+    props.spacing &&
+    css`
+      margin-top: calc(${props.theme.global.spacing} * 1);
+    `}
+`;
+
+interface PlayersCardSeparatorProps {
+  spacing?: boolean;
+}
+
+function PlayersCardSeparator({
+  spacing,
+  children,
+}: PropsWithChildren<PlayersCardSeparatorProps>): JSX.Element {
+  return (
+    <GridAlignedSeparatorRow spacing={spacing}>
+      <hr />
+      <em>{children}</em>
+      <hr />
+    </GridAlignedSeparatorRow>
+  );
+}
+
+interface BalancesCardProps {
+  onTransfer: (entity: string) => void;
+}
+
+/** Component for a card representing the current player. */
+function BalancesCard({ onTransfer }: BalancesCardProps): JSX.Element {
+  const globalState = React.useContext(GlobalStateContext);
+
+  const { currentPlayer } = globalState;
+  const currentPlayerIsBanker =
+    currentPlayer?._id.$oid === globalState.lobby?.banker.$oid;
+
+  const otherPlayers = (globalState.lobby?.players ?? [])
+    .filter((ply) => ply._id.$oid !== globalState.currentPlayer?._id.$oid)
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  return (
+    <MoneyCardContainer>
+      <PlayersCardSeparator>you</PlayersCardSeparator>
+      <BalanceLine
+        icon={
+          <PlayerAvatar
+            player={currentPlayer}
+            size={48}
+            outline
+            crown={currentPlayerIsBanker}
+          />
+        }
+        name={currentPlayer?.name ?? ''}
+        balance={currentPlayer?.balance ?? 0}
+        isTransferable
+        onTransfer={onTransfer}
+        transferEntity={globalState.preflight.transferEntityMap.SELF}
+      />
+
+      {otherPlayers.length > 0 && (
+        <PlayersCardSeparator spacing>other players</PlayersCardSeparator>
+      )}
+
+      {otherPlayers.map((ply) => (
+        <BalanceLine
+          key={ply._id.$oid}
+          icon={
+            <PlayerAvatar
+              player={ply}
+              size={32}
+              outline
+              crown={ply._id.$oid === globalState?.lobby?.banker.$oid}
+            />
+          }
+          name={ply.name ?? ''}
+          balance={ply.balance ?? 0}
+          isTransferable={false}
+          // TODO: implement other player transfers for banker
+          // isTransferable={currentPlayerIsBanker}
+          // onTransfer={onTransfer}
+          // transferEntity={ply._id.$oid}
+        />
+      ))}
+
+      <PlayersCardSeparator spacing>institutions</PlayersCardSeparator>
+
+      {/* The bank */}
+      <BalanceLine
+        icon={
+          <EntityAvatar size={32}>
+            <BankIcon />
+          </EntityAvatar>
+        }
+        name="The Bank"
+        balance={
+          globalState.lobby?.options.unlimitedBank
+            ? Infinity
+            : globalState.lobby?.bank ?? 0
+        }
+        isTransferable={currentPlayerIsBanker}
+        onTransfer={onTransfer}
+        transferEntity={globalState.preflight.transferEntityMap.BANK}
+      />
+
+      {/* Free parking */}
+      <BalanceLine
+        icon={
+          <EntityAvatar size={32}>
+            <FPIcon />
+          </EntityAvatar>
+        }
+        name="Free Parking"
+        balance={globalState.lobby?.freeParking ?? 0}
+        isTransferable={currentPlayerIsBanker}
+        onTransfer={onTransfer}
+        transferEntity={globalState.preflight.transferEntityMap.FP}
+      />
+    </MoneyCardContainer>
+  );
+}
 
 export default function PlayView() {
   // Global state reducer
@@ -204,44 +464,15 @@ export default function PlayView() {
     [globalState],
   );
 
-  const isBanker = globalState.playerId === globalState.lobby?.banker.$oid;
+  // const isBanker = globalState.playerId === globalState.lobby?.banker.$oid;
 
-  // List of "money boxes" representing the different balances
-  const moneyBoxList = useMemo(() => {
-    const boxes = [
-      {
-        key: 'player',
-        icon: <PlayerAvatar player={globalState.currentPlayer} size={4 * 16} />,
-        title: globalState.currentPlayer?.name,
-        balance: globalState.currentPlayer?.balance ?? 0,
-        transferable: true,
-        transferSource: globalState.preflight.transferEntityMap.SELF,
-      },
-      {
-        key: 'bank',
-        icon: <BankIcon />,
-        title: 'The Bank',
-        balance: globalState.lobby?.options.unlimitedBank
-          ? '∞'
-          : globalState.lobby?.bank,
-        transferable: isBanker,
-        transferSource: globalState.preflight.transferEntityMap.BANK,
-      },
-    ];
-
-    if (globalState.lobby?.options.freeParking) {
-      boxes.push({
-        key: 'free-parking',
-        icon: <FPIcon />,
-        title: 'Free Parking',
-        balance: globalState.lobby?.freeParking,
-        transferable: isBanker,
-        transferSource: globalState.preflight.transferEntityMap.FP,
-      });
-    }
-
-    return boxes;
-  }, [globalState, isBanker]);
+  const expiresLine = useMemo(
+    () =>
+      globalState.lobby?.expires
+        ? dayjs(globalState.lobby.expires.$date).fromNow()
+        : '',
+    [globalState.lobby?.expires],
+  );
 
   return (
     <>
@@ -250,55 +481,34 @@ export default function PlayView() {
 
       {/* Show the lobby code */}
       <LobbyInfoLine>
-        {isBanker && (
-          <>
-            {/* TODO: add proper processing of date times */}
-            {/* Expires: <u>{globalState.lobby.expires.fromNow()}</u> */}
-          </>
-        )}
+        Lobby expires {expiresLine}
         <LobbyInfoLineSpacer />
-        Lobby code: <em>{globalState.lobby?.code}</em>
+        join code is<em>{globalState.lobby?.code}</em>
       </LobbyInfoLine>
       <VerticalSpacer factor={0.382} />
 
-      {/* Map and insert all the money boxes */}
-      {moneyBoxList.map((moneyBox) => (
-        <React.Fragment key={moneyBox.key}>
-          <MoneyBox pad="xsmall" elevation="small">
-            {/* <img src={moneyBox.icon} alt="resource icon" /> */}
-            {moneyBox.icon}
-            <Heading level={2}>{moneyBox.title}</Heading>
-            <MoneyBoxBalanceLine>
-              {globalState.lobby?.options.currency}
-              <code>{moneyBox.balance}</code>
-            </MoneyBoxBalanceLine>
-            {moneyBox.transferable ? (
-              <Button
-                icon={<Send />}
-                plain={false}
-                onClick={() => startTransfer(moneyBox.transferSource)}
-              />
-            ) : (
-              <MoneyBoxNoTransfer aria-hidden />
-            )}
-            {/* {moneyBox.transferable && <TransferButton label="Transfer" />} */}
-          </MoneyBox>
-          <VerticalSpacer factor={0.382} />
-        </React.Fragment>
-      ))}
+      <BalancesCard onTransfer={startTransfer} />
+      {/* <BalanceEntityCard onTransfer={startTransfer} /> */}
 
       {/* Modify the theme to insert the event log */}
       <ThemeContext.Extend
         value={{ global: { colors: { text: { light: '#222222' } } } }}
       >
         {(globalState.events?.length ?? 0) > 0 ? (
-          <LogBox pad="xsmall" elevation="small">
-            <h4>Event Log</h4>
-            <ul>
-              {[...(globalState.events ?? [])].reverse().map((event) => (
-                <li key={event._id.$oid}>{formatEvent(event)}</li>
-              ))}
-            </ul>
+          <LogBox pad="small" elevation="small">
+            <LogBoxInnerContainer>
+              {/* <h4>Event Log</h4> */}
+              <SeparatorRow>
+                <hr />
+                <em>events</em>
+                <hr />
+              </SeparatorRow>
+              <ul>
+                {[...(globalState.events ?? [])].reverse().map((event) => (
+                  <li key={event._id.$oid}>{formatEvent(event)}</li>
+                ))}
+              </ul>
+            </LogBoxInnerContainer>
           </LogBox>
         ) : (
           <CenteredSpinner />

@@ -380,7 +380,10 @@ async def api_disband(request: fastapi.Request):
         inserts=[],
     )
     await event.insert()
-    await socket.manager.broadcast_update(lobby, [event])
+
+    # Instead of broadcasting this event to players (what's the point?)
+    # we just broadcast a message to kick them all from the game
+    await socket.manager.broadcast_disband(lobby)
 
     # Return empty response
     return helpers.composeResponse()
@@ -473,5 +476,8 @@ async def api_kick(request: fastapi.Request, target_id_str: str):
     # Update the lobby document and broadcast the changes
     await lobby.update()
     await socket.manager.broadcast_update(lobby, [event])
+
+    # Broadcast the message to kick the player from the lobby
+    await socket.manager.broadcast_kick(lobby, player)
 
     return helpers.composeResponse()

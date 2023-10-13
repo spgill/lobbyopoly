@@ -8,6 +8,7 @@ import typing
 from bson.objectid import ObjectId as BsonObjectId
 import motor.motor_asyncio
 import pydantic
+import pydantic_core
 
 # local imports
 
@@ -39,25 +40,37 @@ async def close_db_connect():
     db_client = None
 
 
-class ObjectId(BsonObjectId):
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
+class _ObjectIdPydanticAnnotation:
+    # Based on https://docs.pydantic.dev/latest/usage/types/custom/#handling-third-party-types.
 
     @classmethod
-    def validate(cls, v):
-        if not ObjectId.is_valid(v):
-            raise ValueError("Invalid objectid")
-        return ObjectId(v)
+    def __get_pydantic_core_schema__(
+        cls,
+        _source_type: typing.Any,
+        _handler: typing.Callable[
+            [typing.Any], pydantic_core.core_schema.CoreSchema
+        ],
+    ) -> pydantic_core.core_schema.CoreSchema:
+        def validate_from_str(input_value: str) -> BsonObjectId:
+            return BsonObjectId(input_value)
 
-    @classmethod
-    def __modify_schema__(cls, field_schema):
-        field_schema.update(type="string")
+        return pydantic_core.core_schema.union_schema(
+            [
+                # check if it's an instance first before doing any further work
+                pydantic_core.core_schema.is_instance_schema(BsonObjectId),
+                pydantic_core.core_schema.no_info_plain_validator_function(
+                    validate_from_str
+                ),
+            ],
+            serialization=pydantic_core.core_schema.to_string_ser_schema(),
+        )
+
+
+ObjectId = typing.Annotated[BsonObjectId, _ObjectIdPydanticAnnotation]
 
 
 class AppBaseModel(pydantic.BaseModel):
-    class Config:
-        use_enum_values = True
+    model_config = pydantic.ConfigDict(use_enum_values=True)
 
 
 M = typing.TypeVar("M", bound="MongoDocument")
@@ -66,7 +79,9 @@ M = typing.TypeVar("M", bound="MongoDocument")
 class MongoDocument(AppBaseModel):
     collection: typing.ClassVar[str] = "CHANGE ME"
 
-    id: ObjectId = pydantic.Field(default_factory=ObjectId, alias="_id")
+    id: typing.Annotated[
+        ObjectId, pydantic.Field(default_factory=ObjectId, alias="_id")
+    ]
 
     @classmethod
     def parse_document(cls, document: _Document):

@@ -14,7 +14,7 @@ import React, { useMemo } from 'react';
 import styled from 'styled-components';
 
 // Local imports
-import PlayerAvatar from '../components/PlayerAvatar';
+import PlayerAvatar, { EntityAvatar } from '../components/Avatars';
 import VerticalSpacer from '../components/VerticalSpacer';
 import {
   GlobalStateContext,
@@ -24,8 +24,8 @@ import {
 import * as api from '../api/APIUtils';
 
 // Asset imports
-import { ReactComponent as BankIcon } from '../assets/icons/noun_Piggy Bank_2342153.svg';
-import { ReactComponent as FPIcon } from '../assets/icons/noun_Parking_451846.svg';
+import { ReactComponent as BankIcon } from '../assets/icons/noun-bank-1010504.svg';
+import { ReactComponent as FPIcon } from '../assets/icons/noun-parking-2884387.svg';
 
 const StyledOptionBox = styled(Box)`
   display: grid;
@@ -160,7 +160,11 @@ export default function useTransferLayer(): [
 
     if (transferSource !== globalState.preflight.transferEntityMap.BANK) {
       targets.push({
-        icon: <BankIcon />,
+        icon: (
+          <EntityAvatar size={32}>
+            <BankIcon />
+          </EntityAvatar>
+        ),
         label: 'The Bank',
         value: globalState.preflight.transferEntityMap.BANK,
       });
@@ -171,7 +175,11 @@ export default function useTransferLayer(): [
       globalState.lobby?.options.freeParking
     ) {
       targets.push({
-        icon: <FPIcon />,
+        icon: (
+          <EntityAvatar size={32}>
+            <FPIcon />
+          </EntityAvatar>
+        ),
         label: 'Free Parking',
         value: globalState.preflight.transferEntityMap.FP,
       });
@@ -181,7 +189,14 @@ export default function useTransferLayer(): [
       .filter((ply) => ply._id.$oid !== globalState.playerId || nonPlayerSource)
       .map((ply) =>
         targets.push({
-          icon: <PlayerAvatar player={ply} size={32} />,
+          icon: (
+            <PlayerAvatar
+              player={ply}
+              size={32}
+              outline={false}
+              crown={false}
+            />
+          ),
           label: ply.name,
           value: ply._id.$oid,
         }),
@@ -266,6 +281,7 @@ export default function useTransferLayer(): [
       modal
       onClickOutside={closeHandler}
       onEsc={closeHandler}
+      animation="fadeIn"
     >
       <Box pad="medium">
         {/* Transfer target selection */}

@@ -1,7 +1,5 @@
 // Vendor imports
-import axios from 'axios';
-import msgpack from 'msgpack-lite';
-import { Buffer } from 'buffer';
+import axios, { AxiosError } from 'axios';
 
 // DayJS and plugin imports
 import dayjs from 'dayjs';
@@ -15,37 +13,33 @@ dayjs.extend(dayjsLocalPlugin);
 dayjs.extend(dayjsRelativePlugin);
 dayjs.extend(dayjsUtcPlugin);
 
-// Create local codec to allow for custom type decoding
-const codec = msgpack.createCodec();
-
-// Decoder for dates, type 0x30
-codec.addExtUnpacker(0x30, (buffer) => {
-  let bufferDataView: DataView;
-  if (Buffer.isBuffer(buffer)) {
-    bufferDataView = new DataView(new Uint8Array(buffer).buffer);
-  } else {
-    bufferDataView = new DataView(buffer.buffer);
-  }
-
-  // Unpack the double from the buffer, multiply it by 1000 to convert to
-  // milliseconds, and parse it as a UTC timestamp, then convert to local time.
-  return dayjs.utc(bufferDataView.getFloat64(0) * 1000).local();
-});
-
 export async function makeRequest<REQ = any, RESP = any>(
   method: string,
   url: string,
   data?: REQ,
-): Promise<ServerMessage<RESP>> {
-  const response = await axios.request({
-    method,
-    url,
-    // headers: {
-    //   'content-type': 'application/msgpack',
-    // },
-    // responseType: 'arraybuffer',
-    data,
-  });
+): Promise<ServerMessage<RESP | undefined>> {
+  let message: ServerMessage<RESP | undefined> = {};
+
+  try {
+    const response = await axios.request({
+      method,
+      url,
+      // headers: {
+      //   'content-type': 'application/msgpack',
+      // },
+      // responseType: 'arraybuffer',
+      data,
+    });
+
+    message = response.data;
+  } catch (err) {
+    if (typeof err === 'object') {
+      const axiosErr = err as AxiosError;
+      message = {
+        error: axiosErr.message,
+      };
+    }
+  }
 
   // const decoded: ServerMessage<RESP> = msgpack.decode(
   //   Buffer.from(response.data),
@@ -57,5 +51,5 @@ export async function makeRequest<REQ = any, RESP = any>(
   //   console.log('Decoded response:', method, url, decoded);
   // }
 
-  return response.data;
+  return message;
 }

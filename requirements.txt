@@ -2,7 +2,7 @@ fastapi
 honcho
 hypercorn
 itsdangerous
-mongoengine
-msgpack
+motor
+motor-types
 pydantic
 typer

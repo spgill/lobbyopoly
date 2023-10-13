@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useEffect,
   useReducer,
+  useRef,
   useState,
 } from 'react';
 import useWebSocket from 'react-use-websocket';
@@ -18,7 +19,7 @@ import {
   GlobalStateAction,
 } from '../utils/state';
 import { makeRequest } from '../api/APIUtils';
-import { Lobby, WSEventMessage } from '../api/APITypes';
+import { Lobby, WSMessage, WSMessageType } from '../api/APITypes';
 
 function shouldReconnect() {
   return true;
@@ -52,20 +53,40 @@ export function StateManager({ children }: PropsWithChildren) {
     shouldReconnect,
   });
 
+  const currentPlayerId = useRef<string>();
+  useEffect(() => {
+    currentPlayerId.current = globalState.currentPlayer?._id.$oid;
+  }, [globalState.currentPlayer]);
+
   // When messages are received, decode them and store the data in the state
   useEffect(() => {
     if (lastJsonMessage) {
-      const message = lastJsonMessage as unknown as WSEventMessage;
+      const message = lastJsonMessage as unknown as WSMessage;
 
-      globalStateDispatch({
-        type: GlobalStateAction.UPDATE_LOBBY,
-        lobby: message.lobby,
-      });
+      // If a kick message was received, reset the state
+      if (message.type === WSMessageType.Kick) {
+        if (
+          !message.player ||
+          message.player?.$oid === currentPlayerId.current
+        ) {
+          globalStateDispatch({
+            type: GlobalStateAction.RESET_STATE,
+          });
+        }
+      }
 
-      globalStateDispatch({
-        type: GlobalStateAction.ADD_EVENTS,
-        events: message.events,
-      });
+      // If an update message was received, update the event and lobby state
+      else if (message.type === WSMessageType.Update) {
+        globalStateDispatch({
+          type: GlobalStateAction.ADD_EVENTS,
+          events: message.payload.events,
+        });
+
+        globalStateDispatch({
+          type: GlobalStateAction.UPDATE_LOBBY,
+          lobby: message.payload.lobby,
+        });
+      }
     }
   }, [lastJsonMessage]);
 

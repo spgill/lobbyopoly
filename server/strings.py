@@ -22,7 +22,9 @@ class Bundle(enum.Enum):
     ERROR_INVALID_OPTIONS = "Invalid game options"
 
     # Event strings
-    EVENT_PLY_JOIN = "{0} joined the game. The Bank transferred to them a starting balance of {1}."
+    EVENT_PLY_JOIN = (
+        "{0} joined the game. The Bank gave them a starting balance of {1}."
+    )
     EVENT_PLY_MADE_BANKER = "{0} has been promoted to Banker."
     EVENT_PLY_TRANSFER_BANKER = (
         "{0} transferred Banker responsibilities to {1}."
@@ -31,7 +33,7 @@ class Bundle(enum.Enum):
         "A player has left. Their balance has been returned to the bank."
     )
     EVENT_PLY_KICK = "A player has been kicked. Their balance has been returned to the bank."
-    EVENT_TRANSFER = "{0} transferred {1} from {2} to {3}."
+    EVENT_TRANSFER = "{0} sent {1} from {2} to {3}."
     EVENT_DISBANDED = "The lobby has been disbanded."
 
     # Transfer inserts
