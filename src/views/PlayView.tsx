@@ -273,7 +273,7 @@ const GridAlignedSeparatorRow = styled(SeparatorRow)<{ spacing?: boolean }>`
   ${(props) =>
     props.spacing &&
     css`
-      margin-top: calc(${props.theme.global.spacing} * 1);
+      margin-top: calc(${props.theme.global.spacing} / 2);
     `}
 `;
 
