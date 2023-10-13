@@ -20,14 +20,14 @@
     "commandCenter.border": "#e7e7e799"
   },
 
-  "editor.tabSize": 2,
-  "editor.detectIndentation": false,
+  "editor.detectIndentation": true,
   "javascript.validate.enable": false,
-  "python.formatting.provider": "black",
 
   "[python]": {
-    "editor.tabSize": 4
+    "editor.tabSize": 4,
+    "editor.defaultFormatter": "ms-python.black-formatter"
   },
+  
   "peacock.color": "#e1403e",
   "peacock.remoteColor": "#e1403e",
   "editor.formatOnSave": true,
@@ -36,6 +36,4 @@
   },
   "eslint.validate": ["javascript"],
   "python.analysis.typeCheckingMode": "basic",
-  "python.linting.flake8Enabled": true,
-  "python.linting.enabled": true
 }
